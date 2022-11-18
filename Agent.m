@@ -18,6 +18,7 @@ classdef Agent
         offsetTrue_;    % True clock offset with respect to atom clock
         offset_;        % Clock offset with respect to atom clock
         skewTrue_;      % True clock skew with respect to atom clock
+        local_t_;       % local clock time
         
         % TX/RX param
         Deleyed_TX_;
@@ -25,11 +26,17 @@ classdef Agent
         tx_start_time_;  % Transmission start time
         tx_delay_;      % Transmission delay
 
-        tx_time_;       % Tx timestamp
-        rx_time_;       % Rx timestamp
+        tx_time_a_;       % Tx timestamp: atom time
+        rx_time_a_;       % Rx timestamp: atom time
+        tx_time_l_;       % Tx timestamp: local time
+        rx_time_l_;       % Rx timestamp: local time
 
         tx_msg_;        % TX message
         rx_msg_;        % RX message
+
+        cfo_;           % relative carrier frequency offset
+        t_reply_;       
+
         
         slot_num_;      % Assigned slot number;
         
@@ -54,17 +61,19 @@ classdef Agent
 
             obj.Deleyed_TX_=0; % default non-delayed transmit
 
-            obj.skewTrue_=(rand-0.5)*40e-6;
-
+            obj.offsetTrue_=(rand-0.5)*40e-6;  % ea
+            obj.skewTrue_=(rand-0.5)*2e-7;   % 1e-7 s:30m clock skew
             
             obj.pos_buffer_=zeros(10,2);
             obj.rxtime_buffer_=zeros(10,1);
+            obj.cfo_=zeros(5,1);
+            obj.t_reply_=zeros(5,1);
            
         end
 
         function obj=uwbTx(obj,delayed_flag)
             if delayed_flag==0
-                delayed_flag=1;
+                
             else
                 
             end
@@ -72,7 +81,8 @@ classdef Agent
         end
 
         function obj=uwbRx(obj,channel)
-            obj.rx_time_=channel.rx_;
+            obj.rx_time_l_=channel.rx_*(1+obj.offsetTrue_)+obj.skewTrue_;
+            obj.rx_time_a_=channel.rx_;
             obj.rx_msg_=channel.uwb_msg_;
         end  
     end
