@@ -1,15 +1,16 @@
-%% add clock drift
-
 close all;clear;clc;
 
-%% simulation setting
-% TDMA setting
 rng(1);  % random seeds
 
+%% simulation setting
+% basic parameter
+c=physconst("lightspeed");
+% sigmaD=0.3;     % UWB Range standard deviation
 global atom_t   %atom clock time:standard time
 global fc       % UWB center frequency
 fc=6489.6e6;    % UWB channel 5
 
+% TDMA setting
 T0=0;
 slot_cnt=1;
 slot_num=10;
@@ -21,108 +22,47 @@ blink_delay=500e-6;
 response_delay=500e-6;
 sequence_delay=300e-6;
 
-% Agent setting
-AgentNum=6;
-
-
-c=physconst("lightspeed");
-sigmaD=0.1;
-
 %% Agents initialization
-
-% first with 1 Master Anchor,4 Slave Anchor,1 tag
-% AgentPos0=[[0 0];[5 0];[0 5];[-5 0];[0 -5];[3 3];[0 3];[4 2];[3 1];[-3 5]]*10;
-AgentPos0=[[0 0];[5 0];[0 5];[-5 0];[0 -5];[3 3]]*10;
-
-
-
-AgentV0=zeros(AgentNum,2);  % static mode
-Agents=Agent.empty();
-for i=1:AgentNum
-    Agents(i)=Agent(i,AgentPos0(i,:),AgentV0(i,:));  
-end
-
-% role initialization
+AgentNum=6;
 M_Anchor_Index=[1];
 S_Anchor_Index=[2:5];
 Tag_Index=[6];
-M_Anchor=Agents(M_Anchor_Index);
-for i=1:length(M_Anchor)
-    M_Anchor(i).role_=0;
-    Agents(M_Anchor_Index(i)).role_=0;
-end
-S_Anchor=Agents(S_Anchor_Index);
-for i=1:length(S_Anchor)
-    S_Anchor(i).role_=1;
-    Agents(S_Anchor_Index(i)).role_=1;
-end
-Tag=Agents(Tag_Index);
-for i=1:length(Tag)
-    Tag(i).role_=2;
-    Agents(Tag_Index(i)).role_=2;
-end
 
-% slot initialization (only for M_Anchor)
-for i=1:length(M_Anchor_Index)
-    M_Anchor(i).slot_num_=i; % slot allocation
-    Agents(M_Anchor_Index(i)).slot_num_=i;
+tag_pos=(rand(1,2)-0.5)*10;
+AgentPos0=[[0 0];[5 5];[-5 5];[-5 -5];[5 -5];tag_pos]*10;
+AgentV0=zeros(AgentNum,2);  % static mode
+Agents = Agents_init(AgentNum,M_Anchor_Index,S_Anchor_Index,Tag_Index,AgentPos0,AgentV0);
 
-    % determine the slave anchor for each master anchor and their number
-    M_Anchor(i).slave_=sort(S_Anchor_Index);  %TODO: the algorithm to choose slave anchor
-    Agents(M_Anchor_Index(i)).slave_=sort(S_Anchor_Index);
-  
-end
-
-for i=1:length(S_Anchor_Index)
-    Agents(S_Anchor_Index(i)).master_=sort(M_Anchor_Index);
-end
-
-
-GlobalChannels=Channels.empty();
-for i=1:AgentNum
-    for j=1:AgentNum
-        GlobalChannels(i,j)=Channels(i,j,norm(AgentPos0(i,:)-AgentPos0(j,:)));
-    end
-end
-
-
-
+%% Channels initialization
+GlobalChannels = Channels_init(Agents);
 
 %% debug and plot param
 
 
-
-
 %% process
 for i=1:1
-
-    
-
-    %% Anchor transmit blink
-    for j=1:length(M_Anchor)
-        if M_Anchor(j).slot_num_==i
-            m_id=M_Anchor(j).id_;
+    % find m_anchor of this slot
+    for j=1:length(M_Anchor_Index)
+        if Agents(M_Anchor_Index(j)).slot_num_==i
+            m_id=Agents(M_Anchor_Index(j)).id_;
         end
-
     end
 
     atom_t=slot_t(i)+Agents(m_id).skewTrue_;   % every slot begins distributively
 
+    % m_anchor transmit blink
     Agents(m_id).tx_msg_=uwb_msg(0,1,i);
     Agents(m_id).tx_msg_.pos_=[Agents(m_id).pTrue_];
     Agents(m_id).tx_msg_.slave_=Agents(m_id).slave_;
     Agents(m_id).tx_delay_=blink_delay;
     Agents(m_id).tx_time_l_=slot_t(i)+blink_delay;
     Agents(m_id).tx_time_a_=atom_t+blink_delay/(1+Agents(m_id).offsetTrue_);
-
-    atom_t=Agents(m_id).tx_time_a_;
-
     Agents(m_id)=uwbTx(Agents(m_id),0); % Tx immediately
+
     GlobalChannels=GlobalChannelsTx(GlobalChannels,Agents(m_id),m_id);
 
-    %% Slave Anchors receive blink and transmit response
-    %% Tags receive blink and response;
-
+    % s_anchor receive blink and transmit response
+    % tag receive blink and response
     
     for j=1:AgentNum
         if j==m_id
@@ -132,18 +72,13 @@ for i=1:1
             GlobalChannels(m_id,j).busy_=0;
             slaves=GlobalChannels(m_id,j).uwb_msg_.slave_;      
             if Agents(j).role_==2  % Tag
-
                 Agents(j).rxtime_buffer_(1)=Agents(j).rx_time_l_;  % rx_time1
                 Agents(j).pos_buffer_(1,:)=Agents(j).rx_msg_.pos_;
-
                 % clock offset estimation
                 Agents(j).cfo_(1)=estCFO(Agents(m_id),Agents(j));
-            elseif Agents(j).role_==1   % Slave Anchor
-                
+            elseif Agents(j).role_==1   % Slave Anchor       
                 if ismember(j,slaves)
-                    Agents(j).Deleyed_TX_=1;
-              
-                    
+                    Agents(j).Deleyed_TX_=1;              
                     Agents(j).tx_delay_=(find(slaves==j)-1)*sequence_delay+response_delay;
                     Agents(j).tx_time_l_=Agents(j).rx_time_l_+Agents(j).tx_delay_;
                     Agents(j).tx_time_a_=Agents(j).rx_time_a_+Agents(j).tx_delay_/(1+Agents(j).offsetTrue_);
@@ -183,13 +118,15 @@ for i=1:1
     for t=1:length(Tag_Index)
         Agents(Tag_Index(t))=Fang_tdoa(Agents(Tag_Index(t)));
         Agents(Tag_Index(t)).p_
-    end
-
-
-
-
+    end    
 end
 
+
+
+
+
+
+%% plot positioning information
 figure;
 hold on;axis equal;grid on;
 axis([-50 50 -50 50]*1.2);
@@ -211,13 +148,7 @@ end
 legend([p1,p2,p3,p4],"Master Anchor","Slave Anchor","Tag_{pTrue}","Tag_p",'Location','southeast');
 
 
-% skew=zeros(AgentNum,1);
-% for i=1:AgentNum
-%     skew(i)=Agents(i).skewTrue_;
-% end
-% skew
-
-
+%% plot tag_rx_time in one slot
 figure;
 hold on;
 stem(Agents(6).rxtime_buffer_(1:5),ones(1,5));
@@ -228,16 +159,20 @@ legend("Tag RX Time","Slot Boundary");
 
 
 function GlobalChannels=GlobalChannelsTx(GlobalChannels,Agent,j)
-
-sigmaD=0.1;
+sigmaD=0.3;
 c=physconst("lightspeed");
+Crange=100;  % communication range
+
 
 AgentNum=size(GlobalChannels,2);
 for i=1:AgentNum
     if i==j
         continue;
     else
-        GlobalChannels(j,i).busy_=1;       % TODO:add cover range later
+        GlobalChannels(j,i).busy_=1; 
+%         if GlobalChannels(j,i).dGt_<=Crange
+%             GlobalChannels(j,i).busy_=1;       
+%         end
         GlobalChannels(j,i).tx_=Agent.tx_time_a_;
         GlobalChannels(j,i).rx_=Agent.tx_time_a_+((GlobalChannels(j,i).dGt_+randn*sigmaD)/c);
         GlobalChannels(j,i).uwb_msg_=Agent.tx_msg_;
@@ -252,12 +187,14 @@ response_delay=500e-6;
 sequence_delay=300e-6;
 
 A=zeros(4,3);
-b=zeros(4,1);
 ri1=zeros(4,1);
 Ki1=zeros(4,1);
 for i=1:4
-%     ri1(i)=c*((Agent.rxtime_buffer_(i+1)-Agent.rxtime_buffer_(1))-Agent.cfo_(i+1)*Agent.t_reply_(i+1))-norm(Agent.pos_buffer_(i+1,:)-Agent.pos_buffer_(1,:));
+
+    % with CFO calibration
     ri1(i)=c*((Agent.rxtime_buffer_(i+1)-Agent.rxtime_buffer_(1))-Agent.cfo_(i+1)*(response_delay+(i-1)*sequence_delay))-norm(Agent.pos_buffer_(i+1,:)-Agent.pos_buffer_(1,:));
+    % without CFO calibration
+%     ri1(i)=c*((Agent.rxtime_buffer_(i+1)-Agent.rxtime_buffer_(1))-(response_delay+(i-1)*sequence_delay))-norm(Agent.pos_buffer_(i+1,:)-Agent.pos_buffer_(1,:));
     Ki1(i)=norm(Agent.pos_buffer_(i+1,:))^2-norm(Agent.pos_buffer_(1,:))^2;
     A(i,:)=2*[Agent.pos_buffer_(i+1,1)-Agent.pos_buffer_(1,1),Agent.pos_buffer_(i+1,2)-Agent.pos_buffer_(1,2),ri1(i)];
     
@@ -266,7 +203,6 @@ b=Ki1-ri1.^2;
 temp=(A.'*A)\A.'*b;
 Agent.p_=temp(1:2);
 
-
 end
 
 function cfo=estCFO(Agent1,Agent2)
@@ -274,8 +210,4 @@ function cfo=estCFO(Agent1,Agent2)
 global fc
 sigmaF=1000;   % carrier frequency estimation standard deviation
 cfo=(fc/(1+Agent1.offsetTrue_)+randn(1)*sigmaF)/(fc/(1+Agent2.offsetTrue_)+randn(1)*sigmaF);
-end
-
-function time_cal(skew,offset)
-
 end

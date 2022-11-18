@@ -35,7 +35,8 @@ classdef Agent
         rx_msg_;        % RX message
 
         cfo_;           % relative carrier frequency offset
-        t_reply_;       
+        t_reply_;
+        treply_count;
 
         
         slot_num_;      % Assigned slot number;
@@ -45,7 +46,9 @@ classdef Agent
 
        
         pos_buffer_;
+        pos_count_;
         rxtime_buffer_;        % store message
+        rxtime_count_;
 
         estRes_;        % Estimation results
     end
@@ -64,10 +67,11 @@ classdef Agent
             obj.offsetTrue_=(rand-0.5)*40e-6;  % ea
             obj.skewTrue_=(rand-0.5)*2e-7;   % 1e-7 s:30m clock skew
             
-            obj.pos_buffer_=zeros(10,2);
-            obj.rxtime_buffer_=zeros(10,1);
-            obj.cfo_=zeros(5,1);
-            obj.t_reply_=zeros(5,1);
+            obj.treply_count=0;
+            obj.pos_count_=0;
+            obj.rxtime_count_=0;
+            
+            
            
         end
 
