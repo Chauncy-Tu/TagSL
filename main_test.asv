@@ -27,7 +27,7 @@ sequence_delay=300e-6;
 
 %% Agents initialization
 AgentNum=6;
-M_Anchor_Index=[1];
+M_Anchor_Index=[1 2];
 S_Anchor_Index=[2:5];
 Tag_Index=[6];
 

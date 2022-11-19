@@ -226,6 +226,6 @@ end
 function cfo=estCFO(Agent1,Agent2)
 % Agent1:TX  Agent2:RX
 global fc
-sigmaF=1;   % carrier frequency estimation standard deviation
+sigmaF=1000;   % carrier frequency estimation standard deviation
 cfo=(fc/(1+Agent1.offsetTrue_)+randn(1)*sigmaF)/(fc/(1+Agent2.offsetTrue_)+randn(1)*sigmaF);
 end

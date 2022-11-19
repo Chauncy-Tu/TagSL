@@ -26,13 +26,15 @@ response_delay=500e-6;
 sequence_delay=300e-6;
 
 %% Agents initialization
-AgentNum=6;
-M_Anchor_Index=[1];
-S_Anchor_Index=[2:5];
-Tag_Index=[6];
+AgentNum=9;
+M_Anchor_Index=[1 2];
+S_Anchor_Index=[3:8];
+Tag_Index=[9];
 
 tag_pos=(rand(1,2)-0.5)*10;
-AgentPos0=[[0 0];[5 5];[-5 5];[-5 -5];[5 -5];tag_pos]*10;
+
+
+AgentPos0=[[0 0];[10 0];[-5 5];[5 5];[15 5];[15 -5]; [5 -5]; [-5 -5]; tag_pos]*10;
 AgentV0=zeros(AgentNum,2);  % static mode
 Agents = Agents_init(AgentNum,M_Anchor_Index,S_Anchor_Index,Tag_Index,AgentPos0,AgentV0);
 
