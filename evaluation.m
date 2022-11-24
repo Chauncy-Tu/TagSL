@@ -210,7 +210,7 @@ Ki1=zeros(4,1);
 for i=1:4
 
     % with CFO calibration
-    ri1(i)=c*((Agent.rxtime_buffer_(i+1)-Agent.rxtime_buffer_(1))-Agent.cfo_(i+1)*(response_delay+(i-1)*sequence_delay))-norm(Agent.pos_buffer_(i+1,:)-Agent.pos_buffer_(1,:));
+    ri1(i)=c*((Agent.rxtime_buffer_(i+1)-Agent.rxtime_buffer_(1))-Agent.cfo_(i+1)*Agent.t_reply_(i+1))-norm(Agent.pos_buffer_(i+1,:)-Agent.pos_buffer_(1,:));
     % without CFO calibration
 %     ri1(i)=c*((Agent.rxtime_buffer_(i+1)-Agent.rxtime_buffer_(1))-(response_delay+(i-1)*sequence_delay))-norm(Agent.pos_buffer_(i+1,:)-Agent.pos_buffer_(1,:));
     Ki1(i)=norm(Agent.pos_buffer_(i+1,:))^2-norm(Agent.pos_buffer_(1,:))^2;

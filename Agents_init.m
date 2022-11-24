@@ -35,16 +35,7 @@ end
 
 % slot initialization (only for M_Anchor)
 for i=1:length(M_Anchor_Index)
-    Agents(M_Anchor_Index(i)).slot_num_=i;
-
-    % determine the slave anchor for each master anchor and their number
-    Agents(M_Anchor_Index(i)).slave_=sort(S_Anchor_Index);
-  
-end
-
-% allocate master for slave_anchor:other algorithm
-for i=1:length(S_Anchor_Index)
-    Agents(S_Anchor_Index(i)).master_=sort(M_Anchor_Index);
+    Agents(M_Anchor_Index(i)).slot_num_=i; 
 end
 
 end

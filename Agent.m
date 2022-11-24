@@ -45,12 +45,25 @@ classdef Agent
         slave_;         % slave anchor (automatically rank by id)
 
        
+        
+        m_rxtime_;
+        s_rxtime_;
+
+        map_;          % global map;
+        
+        tdoa_;
+
+
         pos_buffer_;
         pos_count_;
         rxtime_buffer_;        % store message
         rxtime_count_;
 
         estRes_;        % Estimation results
+
+
+
+
     end
     
     methods
@@ -67,10 +80,11 @@ classdef Agent
             obj.offsetTrue_=(rand-0.5)*40e-6;  % ea
             obj.skewTrue_=(rand-0.5)*2e-7;   % 1e-7 s:30m clock skew
             
-            obj.treply_count=0;
-            obj.pos_count_=0;
-            obj.rxtime_count_=0;
-            
+
+            obj.m_rxtime_=[];
+            obj.s_rxtime_=[];
+            obj.tdoa_=[];
+            obj.cfo_=[];
             
            
         end

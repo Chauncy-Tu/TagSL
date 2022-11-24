@@ -275,7 +275,3 @@ global fc
 sigmaF=1000;   % carrier frequency estimation standard deviation
 cfo=(fc/(1+Agent1.offsetTrue_)+randn(1)*sigmaF)/(fc/(1+Agent2.offsetTrue_)+randn(1)*sigmaF);
 end
-
-function time_cal(skew,offset)
-
-end
