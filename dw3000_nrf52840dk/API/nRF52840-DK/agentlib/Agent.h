@@ -16,21 +16,23 @@
 
 
 
-
-
-
-
+#pragma pack(1)
 
 struct uwb_msg{
 
     uint8_t frame_type_;    //bit7~1: frame type, 0x00: sync; 0x10: blink, 0x20: response; 
-                                   //bit0: round counter, 0:first round, 1:second round
+                            //bit0: round counter, 0:first round, 1:second round
     
     uint8_t frame_cnt;     //frame counter, increase by 1 every second for now
     uint8_t slot_cnt;
 
     uint8_t tx_id_;  // the id of the transmitting agent
     uint8_t mt_id_;  // in slave anchor,id of the
+    
+    uint8_t temp1;
+    uint8_t temp2;
+    uint8_t temp3;
+
     float pos_[2];   // position of the tx agent
     uint8_t slave_[4];  // slave_id
     
@@ -45,7 +47,7 @@ struct Agent{
     char role_;
     uint8_t  id_;
 
-    uint8_t slot_num;
+    uint8_t slot_num_;
 
     float pTrue_[2];
     float p_[2];

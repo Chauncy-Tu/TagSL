@@ -13,27 +13,49 @@ Purpose : Nordic nRF52840-DK build main entry point for the project.
 #include <boards.h>      
 #include <port.h>        
 #include <deca_spi.h>
+#include <deca_device_api.h>
+#include <deca_regs.h>
+
 #include <Agent.h>
 
 #define UNIT_TEST 0
 
 
 
+
+
+/* function declaration */
+void SysTick_Handler(void);
+void test_run_info(unsigned char *data);
+void sysTick_init();
+void nRF52840_init();
+
+
+/* Default communication configuration. We use default non-STS DW mode. */
+static dwt_config_t config = {
+    5,               /* Channel number. */
+    DWT_PLEN_128,    /* Preamble length. Used in TX only. */
+    DWT_PAC8,        /* Preamble acquisition chunk size. Used in RX only. */
+    9,               /* TX preamble code. Used in TX only. */
+    9,               /* RX preamble code. Used in RX only. */
+    1,               /* 0 to use standard 8 symbol SFD, 1 to use non-standard 8 symbol, 2 for non-standard 16 symbol SFD and 3 for 4z 8 symbol SDF type */
+    DWT_BR_6M8,      /* Data rate. */
+    DWT_PHRMODE_STD, /* PHY header mode. */
+    DWT_PHRRATE_STD, /* PHY header rate. */
+    (129 + 8 - 8),   /* SFD timeout (preamble length + 1 + SFD length - PAC size). Used in RX only. */
+    DWT_STS_MODE_OFF,
+    DWT_STS_LEN_64,  /* STS length, see allowed values in Enum dwt_sts_lengths_e */
+    DWT_PDOA_M0      /* PDOA mode off */
+};
+
+extern dwt_txconfig_t txconfig_options;
+
 uint8_t slot_event_ = 0;
 
-char    AgentRole=Master_Anchor;
+struct  Agent agent;
+char    AgentRole=Slave_Anchor;
 uint8_t AgentID=1;
 float   AgentPos[2]={1,1};
-
-
-
-
-extern void agent_run_slot();
-extern struct Agent agent_init(char role,uint8_t id);
-
-void test_run_info(unsigned char *data);
-void SysTick_Handler(void);
-
 
 int main(void) {
     /* USER CODE BEGIN 1 */
@@ -44,8 +66,6 @@ int main(void) {
  
     /* Reset of all peripherals (if attached). */
 
-
-
     /* USER CODE BEGIN Init */
     //user_init_usbd();
     /* USER CODE END Init */
@@ -53,24 +73,19 @@ int main(void) {
     /* USER CODE BEGIN SysInit */
     /* USER CODE END SysInit */
 
-    /* Initialize all configured peripherals */
-    bsp_board_init(BSP_INIT_LEDS | BSP_INIT_BUTTONS);
 
-    /* Initialise the SPI for nRF52840-DK */
-    nrf52840_dk_spi_init();
+   
+    // nRF52840 initialization
+    nRF52840_init();
 
-    /* Configuring interrupt*/
-    dw_irq_init();
-
-    /* Small pause before startup */
-    nrf_delay_ms(2);
+    // system tick initializaiton
+    sysTick_init();
 
 
-    SystemCoreClockUpdate();
-    int slotTickCnt = SystemCoreClock / 1000 * SLOT_LENGTH_IN_MS;   // SystemCoreClock:64000000 64MHz
-    SysTick_Config(slotTickCnt);
+    //  DW3000 initialization 
+    dw3000_init();
 
-
+    //test
     if(UNIT_TEST)
     {
         //unit_test_main();
@@ -84,11 +99,11 @@ int main(void) {
 
 
     
-    struct Agent agent=agent_init(AgentRole,AgentID);
+    agent=agent_init(AgentRole,AgentID);
     // assign position
     agent.pTrue_[0]=AgentPos[0];
     agent.pTrue_[1]=AgentPos[1];
-    printf("AgentRole:%d",agent.role_);
+    printf("\r\nAgentRole:%d",agent.role_);
 
 
     while(1)
@@ -101,6 +116,7 @@ int main(void) {
          slot_event_=0;			
        }
        
+       dwt_rxenable(DWT_START_RX_IMMEDIATE);
 		
     }
  
@@ -146,12 +162,86 @@ void SysTick_Handler(void)     // invoke this function at the beginning of every
 }
 
 
+void nRF52840_init()
+{
+    /* Initialize all configured peripherals */
+    bsp_board_init(BSP_INIT_LEDS | BSP_INIT_BUTTONS);
+
+    /* Initialise the SPI for nRF52840-DK */
+    nrf52840_dk_spi_init();
+
+    /* Configuring interrupt*/
+    dw_irq_init();
+
+    /* Small pause before startup */
+    nrf_delay_ms(2);
+
+}
+
+void sysTick_init()
+{
+    SystemCoreClockUpdate();
+    int slotTickCnt = SystemCoreClock / 1000 * SLOT_LENGTH_IN_MS;   // SystemCoreClock:64000000 64MHz
+    SysTick_Config(slotTickCnt);
+}
+
+void dw3000_init()
+{
+    port_set_dw_ic_spi_fastrate();
+
+    /* Reset DW IC */
+    reset_DWIC(); /* Target specific drive of RSTn line into DW IC low for a period. */
+
+    Sleep(2); // Time needed for DW3000 to start up (transition from INIT_RC to IDLE_RC, or could wait for SPIRDY event)
+
+    while (!dwt_checkidlerc()) /* Need to make sure DW IC is in IDLE_RC before proceeding */
+    { };
+
+    if (dwt_initialise(DWT_DW_INIT) == DWT_ERROR)
+    {
+        //test_run_info((unsigned char *)"INIT FAILED     ");
+        while (1)
+        { };
+    }
+
+    /* Enabling LEDs here for debug so that for each TX the D1 LED will flash on DW3000 red eval-shield boards. */
+
+    dwt_setleds(DWT_LEDS_ENABLE| DWT_LEDS_INIT_BLINK) ;
+    
+
+    /* Configure DW IC. See NOTE 5 below. */
+    if(dwt_configure(&config)) /* if the dwt_configure returns DWT_ERROR either the PLL or RX calibration has failed the host should reset the device */
+    {
+        //test_run_info((unsigned char *)"CONFIG FAILED     ");
+        while (1)
+        { };
+    }
+
+    /* Configure the TX spectrum parameters (power PG delay and PG Count) */
+    dwt_configuretxrf(&txconfig_options);
 
 
 
+    /*dw3000 callback function setting*/
+    
+    //dwt_setcallbacks(&tx_ok_cb, &rx_ok_cb, &rx_err_cb, &rx_err_cb, NULL, NULL);
+    //dwt_setcallbacks(tx_ok_cb, rx_ok_cb, rx_to_cb, rx_err_cb, NULL, NULL);
 
+    //dwt_setinterrupt(DWT_INT_RFCG , 0, DWT_ENABLE_INT);
 
+    /*
+    dwt_setinterrupt(SYS_ENABLE_LO_TXFRS_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXFCG_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXFTO_ENABLE_BIT_MASK |
+            SYS_ENABLE_LO_RXPTO_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXPHE_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXFCE_ENABLE_BIT_MASK |
+            SYS_ENABLE_LO_RXFSL_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXSTO_ENABLE_BIT_MASK, 0, DWT_ENABLE_INT);
 
+    */
+  
+    /* Install DW IC IRQ handler. */
+    //port_set_dwic_isr(dwt_isr);
+    
+
+    
+}
 
 
 /*************************** End of file ****************************/

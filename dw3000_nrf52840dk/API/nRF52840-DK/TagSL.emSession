@@ -45,8 +45,6 @@
   <ProjectSessionItem path="TagSL;TagSL"/>
   <ProjectSessionItem path="TagSL;TagSL;Source"/>
   <ProjectSessionItem path="TagSL;TagSL;Source;agentlib"/>
-  <ProjectSessionItem path="TagSL;TagSL;Source;decadriver"/>
-  <ProjectSessionItem path="TagSL;TagSL;Source;platform_nRF52840-DK"/>
   <ProjectSessionItem path="TagSL;TagSL;Source;SDK"/>
   <ProjectSessionItem path="TagSL;TagSL;Source;SDK;nRF_Common"/>
  </Project>
@@ -101,13 +99,9 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="16" y="37" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="Source/main.c" selected="1" top="22" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="22" y="60" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="agentlib/Agent.h" selected="0" top="33" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="15" y="34" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="agentlib/Agent.c" selected="0" top="12" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="41" y="53" useTextEdit="1" openedFrom="E:/Lab/Project/MAC_simulation/TagSL/dw3000_nrf52840dk/API/nRF52840-DK/Source/main.c" useBinaryEdit="0" left="0" path="SDK/modules/nrfx/mdk/system_nrf52840.c" selected="0" top="31" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="11" y="299" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../../../Multi-Tag-AOA/iot_aoa_boot/uwbLib/uwbLib.c" selected="0" top="1027" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="17" y="19" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="agentlib/uwb_msg.h" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="12" y="240" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../../../Multi-Tag-AOA/iot_aoa_boot/src/main.c" selected="0" top="225" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="11" y="98" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="Source/main.c" selected="1" top="82" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="22" y="60" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="agentlib/Agent.h" selected="0" top="51" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="17" y="42" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="agentlib/Agent.c" selected="0" top="36" codecName="Default"/>
  </Files>
- <ARMCrossStudioWindow activeProject="TagSL" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="E:/Lab/Project/MAC_simulation/TagSL/dw3000_nrf52840dk/API/nRF52840-DK/agentlib" debugSearchPath="" autoConnectCapabilities="3711"/>
+ <ARMCrossStudioWindow activeProject="TagSL" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="E:/Lab/Project/MAC_simulation/TagSL/dw3000_nrf52840dk/API/nRF52840-DK/agentlib" debugSearchPath="" autoConnectCapabilities="3199"/>
 </session>
