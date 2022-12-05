@@ -3315,7 +3315,6 @@ void dwt_isr(void)
     //Read Fast Status register
     uint8_t fstat = dwt_read8bitoffsetreg(FINT_STAT_ID, 0);
     uint32_t status = dwt_read32bitreg(SYS_STATUS_ID); // Read status register low 32bits
-    printf("\r\nstatus_reg:%X",status);
     pdw3000local->cbData.status = status;
     if ((pdw3000local->stsconfig & DWT_STS_MODE_ND) == DWT_STS_MODE_ND) //cannot use FSTAT when in no data mode...
     {

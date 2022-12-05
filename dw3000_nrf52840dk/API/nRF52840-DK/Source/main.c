@@ -29,6 +29,7 @@ void SysTick_Handler(void);
 void test_run_info(unsigned char *data);
 void sysTick_init();
 void nRF52840_init();
+void dw3000_init1();
 
 
 /* Default communication configuration. We use default non-STS DW mode. */
@@ -49,6 +50,27 @@ static dwt_config_t config = {
 };
 
 extern dwt_txconfig_t txconfig_options;
+
+
+static void rx_ok_cb(const dwt_cb_data_t *cb_data)
+{
+  printf("\r\n rx_ok");
+}
+static void rx_to_cb(const dwt_cb_data_t *cb_data)
+{
+  printf("\r\n rx_to");
+}
+static void rx_err_cb(const dwt_cb_data_t *cb_data)
+{
+  printf("\r\n rx_err");
+}
+static void tx_ok_cb(const dwt_cb_data_t *cb_data)
+{
+  printf("\r\n tx_ok");
+}
+
+
+
 
 uint8_t slot_event_ = 0;
 
@@ -75,15 +97,93 @@ int main(void) {
 
 
    
-    // nRF52840 initialization
-    nRF52840_init();
+    //// nRF52840 initialization
+    //nRF52840_init();
 
-    // system tick initializaiton
-    sysTick_init();
+    //// system tick initializaiton
+    //sysTick_init();
 
 
-    //  DW3000 initialization 
-    dw3000_init();
+    ////  DW3000 initialization 
+    //dw3000_init1();
+
+
+
+    /* Initialize all configured peripherals */
+    bsp_board_init(BSP_INIT_LEDS | BSP_INIT_BUTTONS);
+
+    /* Initialise the SPI for nRF52840-DK */
+    nrf52840_dk_spi_init();
+
+    /* Configuring interrupt*/
+    dw_irq_init();
+
+    /* Small pause before startup */
+    nrf_delay_ms(2);
+
+    SystemCoreClockUpdate();
+    int slotTickCnt = SystemCoreClock / 1000 * SLOT_LENGTH_IN_MS;   // SystemCoreClock:64000000 64MHz
+    SysTick_Config(slotTickCnt);
+
+    port_set_dw_ic_spi_fastrate();
+
+    /* Reset DW IC */
+    reset_DWIC(); /* Target specific drive of RSTn line into DW IC low for a period. */
+
+    Sleep(2); // Time needed for DW3000 to start up (transition from INIT_RC to IDLE_RC, or could wait for SPIRDY event)
+
+    while (!dwt_checkidlerc()) /* Need to make sure DW IC is in IDLE_RC before proceeding */
+    { };
+
+    if (dwt_initialise(DWT_DW_INIT) == DWT_ERROR)
+    {
+        //test_run_info((unsigned char *)"INIT FAILED     ");
+        while (1)
+        { };
+    }
+
+    /* Enabling LEDs here for debug so that for each TX the D1 LED will flash on DW3000 red eval-shield boards. */
+
+    dwt_setleds(DWT_LEDS_ENABLE| DWT_LEDS_INIT_BLINK) ;
+    
+
+    /* Configure DW IC. See NOTE 5 below. */
+    if(dwt_configure(&config)) /* if the dwt_configure returns DWT_ERROR either the PLL or RX calibration has failed the host should reset the device */
+    {
+        //test_run_info((unsigned char *)"CONFIG FAILED     ");
+        while (1)
+        { };
+    }
+
+    /* Configure the TX spectrum parameters (power PG delay and PG Count) */
+    dwt_configuretxrf(&txconfig_options);
+
+
+
+    /*dw3000 callback function setting*/
+    
+    
+    //dwt_setcallbacks(tx_ok_cb, rx_ok_cb, rx_to_cb, rx_err_cb, NULL, NULL);
+
+    //dwt_setinterrupt(DWT_INT_RFCG , 0, DWT_ENABLE_INT);
+
+    //dwt_setinterrupt(SYS_ENABLE_LO_TXFRS_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXFCG_ENABLE_BIT_MASK, 0, DWT_ENABLE_INT);
+    
+    dwt_setcallbacks(&tx_ok_cb, &rx_ok_cb, &rx_err_cb, &rx_err_cb, NULL, NULL);
+    dwt_setinterrupt(SYS_ENABLE_LO_TXFRS_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXFCG_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXFTO_ENABLE_BIT_MASK |
+            SYS_ENABLE_LO_RXPTO_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXPHE_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXFCE_ENABLE_BIT_MASK |
+            SYS_ENABLE_LO_RXFSL_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXSTO_ENABLE_BIT_MASK, 0, DWT_ENABLE_INT);
+            
+    /* Install DW IC IRQ handler. */
+    port_set_dwic_isr(dwt_isr);
+
+
+
+
+
+
+
+
 
     //test
     if(UNIT_TEST)
@@ -116,7 +216,7 @@ int main(void) {
          slot_event_=0;			
        }
        
-       dwt_rxenable(DWT_START_RX_IMMEDIATE);
+       //dwt_rxenable(DWT_START_RX_IMMEDIATE);
 		
     }
  
@@ -185,7 +285,7 @@ void sysTick_init()
     SysTick_Config(slotTickCnt);
 }
 
-void dw3000_init()
+void dw3000_init1()
 {
     port_set_dw_ic_spi_fastrate();
 
@@ -224,20 +324,26 @@ void dw3000_init()
 
     /*dw3000 callback function setting*/
     
-    //dwt_setcallbacks(&tx_ok_cb, &rx_ok_cb, &rx_err_cb, &rx_err_cb, NULL, NULL);
+    
     //dwt_setcallbacks(tx_ok_cb, rx_ok_cb, rx_to_cb, rx_err_cb, NULL, NULL);
 
     //dwt_setinterrupt(DWT_INT_RFCG , 0, DWT_ENABLE_INT);
 
-    /*
+    
+    //dwt_setinterrupt(SYS_ENABLE_LO_TXFRS_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXFCG_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXFTO_ENABLE_BIT_MASK |
+    //        SYS_ENABLE_LO_RXPTO_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXPHE_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXFCE_ENABLE_BIT_MASK |
+    //        SYS_ENABLE_LO_RXFSL_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXSTO_ENABLE_BIT_MASK, 0, DWT_ENABLE_INT);
+   
+    dwt_setcallbacks(&tx_ok_cb, &rx_ok_cb, &rx_err_cb, &rx_err_cb, NULL, NULL);
+
+    //dwt_setinterrupt(SYS_ENABLE_LO_TXFRS_ENABLE_BIT_MASK |SYS_ENABLE_LO_RXFCG_ENABLE_BIT_MASK, 0, DWT_ENABLE_INT);
+
     dwt_setinterrupt(SYS_ENABLE_LO_TXFRS_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXFCG_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXFTO_ENABLE_BIT_MASK |
             SYS_ENABLE_LO_RXPTO_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXPHE_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXFCE_ENABLE_BIT_MASK |
             SYS_ENABLE_LO_RXFSL_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXSTO_ENABLE_BIT_MASK, 0, DWT_ENABLE_INT);
-
-    */
   
     /* Install DW IC IRQ handler. */
-    //port_set_dwic_isr(dwt_isr);
+    port_set_dwic_isr(dwt_isr);
     
 
     

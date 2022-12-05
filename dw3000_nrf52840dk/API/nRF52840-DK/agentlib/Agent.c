@@ -104,60 +104,64 @@ void agent_run_slot(void)
 
     if(agent.role_==Master_Anchor)
     {
-      if(slot_cnt_==1)
-      {
-        send_uwb_sync();
-      }
-      else if(slot_cnt_==agent.slot_num_)
-      {
-        send_uwb_blink();
-      }
+
+      //send_uwb_sync();
+      //if(slot_cnt_==1)
+      //{
+      //  send_uwb_sync();
+      //}
+      //else if(slot_cnt_==agent.slot_num_)
+      //{
+      //  send_uwb_blink();
+      //}
       
     }
     else if(agent.role_==Slave_Anchor)
     {
-      while(1)
-      {
-        dwt_rxenable(DWT_START_RX_IMMEDIATE);
-        while (!((status_reg = dwt_read32bitreg(SYS_STATUS_ID)) & (SYS_STATUS_RXFCG_BIT_MASK | SYS_STATUS_ALL_RX_ERR )))
-        { };
 
-        if (status_reg & SYS_STATUS_RXFCG_BIT_MASK)
-        {
-          printf("rx_ok");
-        }
-      }
-      
-      
-
-    }
-    else if(agent.role_==Tag)
-    {
-      
-
-    }
-
-
-    dwt_rxenable(DWT_START_RX_IMMEDIATE);
-
-      /* Poll until a frame is properly received or an error/timeout occurs. See NOTE 3 below.
-       * STATUS register is 5 bytes long but, as the event we are looking at is in the first byte of the register, we can use this simplest API
-       * function to access it. */
-
-       
+      dwt_rxenable(DWT_START_RX_IMMEDIATE);
+ 
       while (!((status_reg = dwt_read32bitreg(SYS_STATUS_ID)) & (SYS_STATUS_RXFCG_BIT_MASK | SYS_STATUS_ALL_RX_ERR )))
       { };
 
+      if (status_reg & SYS_STATUS_RXFCG_BIT_MASK)
+      {
+        printf("\r\nrx_ok");
+      }
+      
+      
+      
+
+    }
+
+
+    //else if(agent.role_==Tag)
+    //{
+      
+
+    //}
+
+
+    //dwt_rxenable(DWT_START_RX_IMMEDIATE);
+
+    //  /* Poll until a frame is properly received or an error/timeout occurs. See NOTE 3 below.
+    //   * STATUS register is 5 bytes long but, as the event we are looking at is in the first byte of the register, we can use this simplest API
+    //   * function to access it. */
+
+       
+    //  while (!((status_reg = dwt_read32bitreg(SYS_STATUS_ID)) & (SYS_STATUS_RXFCG_BIT_MASK | SYS_STATUS_ALL_RX_ERR )))
+    //  { };
+
        
       
 
-      if (status_reg & SYS_STATUS_RXFCG_BIT_MASK)
-      {
+    //  if (status_reg & SYS_STATUS_RXFCG_BIT_MASK)
+    //  {
           
-          /* A frame has been received, copy it to our local buffer. */
-          int frame_len = dwt_read32bitreg(RX_FINFO_ID) & RX_FINFO_RXFLEN_BIT_MASK;
-          printf("\n%s%d","frame_len:",frame_len);
-      }
+    //      /* A frame has been received, copy it to our local buffer. */
+    //      int frame_len = dwt_read32bitreg(RX_FINFO_ID) & RX_FINFO_RXFLEN_BIT_MASK;
+    //      printf("\n%s%d","frame_len:",frame_len);
+    //  }
       
 
    
