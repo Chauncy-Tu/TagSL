@@ -20,7 +20,7 @@
       build_treat_warnings_as_errors="No"
       c_additional_options=""
       c_preprocessor_definitions="BOARD_PCA10056;CONFIG_GPIO_AS_PINRESET;FLOAT_ABI_HARD;INITIALIZE_USER_SECTIONS;NO_VTOR_CONFIG;NRF52840_XXAA;DEBUG;APP_TIMER_V2;APP_TIMER_V2_RTC1_ENABLED"
-      c_user_include_directories="$(ProjectDir)/Source/config;$(ProjectDir)/Source/platform_nRF52840-DK;$(NordicSDKDir)/components/drivers_nrf/nrf_soc_nosd;$(NordicSDKDir)/components/boards;$(NordicSDKDir)/components/toolchain/cmsis/include;$(NordicSDKDir)/components/libraries/balloc;$(NordicSDKDir)/components/libraries/ringbuf;$(NordicSDKDir)/components/libraries/log;$(NordicSDKDir)/components/libraries/log/src;$(NordicSDKDir)/components/libraries/memobj;$(NordicSDKDir)/components/libraries/util;$(NordicSDKDir)/components/libraries/atomic;$(NordicSDKDir)/components/libraries/atomic_fifo;$(NordicSDKDir)/components/libraries/delay;$(NordicSDKDir)/components/libraries/experimental_section_vars;$(NordicSDKDir)/components/libraries/strerror;$(NordicSDKDir)/components/libraries/sortlist;$(NordicSDKDir)/components/libraries/timer;$(NordicSDKDir)/components/libraries/usbd;$(NordicSDKDir)/components/libraries/usbd/class/cdc;$(NordicSDKDir)/components/libraries/usbd/class/cdc/acm;$(NordicSDKDir)/modules/nrfx;$(NordicSDKDir)/modules/nrfx/hal;$(NordicSDKDir)/modules/nrfx/mdk;$(NordicSDKDir)/modules/nrfx/drivers/include;$(NordicSDKDir)/integration/nrfx;$(NordicSDKDir)/integration/nrfx/legacy;$(NordicSDKDir)/external/fprintf;$(NordicSDKDir)/external/utf_converter;$(DW3000APIDir)/Src;$(DW3000APIDir)/Src/nRF52840-DK;$(DW3000APIDir)/Src/examples/examples_info;$(DW3000APIDir)/Src/examples/shared_data;$(DW3000APIDir)/Src/decadriver;$(DW3000APIDir)/nRF52840-DK/agentlib"
+      c_user_include_directories="$(ProjectDir)/Source/config;$(ProjectDir)/Source/platform_nRF52840-DK;$(NordicSDKDir)/components/drivers_nrf/nrf_soc_nosd;$(NordicSDKDir)/components/boards;$(NordicSDKDir)/components/toolchain/cmsis/include;$(NordicSDKDir)/components/libraries/balloc;$(NordicSDKDir)/components/libraries/ringbuf;$(NordicSDKDir)/components/libraries/log;$(NordicSDKDir)/components/libraries/log/src;$(NordicSDKDir)/components/libraries/memobj;$(NordicSDKDir)/components/libraries/util;$(NordicSDKDir)/components/libraries/atomic;$(NordicSDKDir)/components/libraries/atomic_fifo;$(NordicSDKDir)/components/libraries/delay;$(NordicSDKDir)/components/libraries/experimental_section_vars;$(NordicSDKDir)/components/libraries/strerror;$(NordicSDKDir)/components/libraries/sortlist;$(NordicSDKDir)/components/libraries/timer;$(NordicSDKDir)/components/libraries/usbd;$(NordicSDKDir)/components/libraries/usbd/class/cdc;$(NordicSDKDir)/components/libraries/usbd/class/cdc/acm;$(NordicSDKDir)/modules/nrfx;$(NordicSDKDir)/modules/nrfx/hal;$(NordicSDKDir)/modules/nrfx/mdk;$(NordicSDKDir)/modules/nrfx/drivers/include;$(NordicSDKDir)/integration/nrfx;$(NordicSDKDir)/integration/nrfx/legacy;$(NordicSDKDir)/external/fprintf;$(NordicSDKDir)/external/utf_converter;$(DW3000APIDir)/Src;$(DW3000APIDir)/Src/nRF52840-DK;$(DW3000APIDir)/Src/examples/examples_info;$(DW3000APIDir)/Src/examples/shared_data;$(DW3000APIDir)/Src/decadriver;$(DW3000APIDir)/nRF52840-DK/agentlib;$(DW3000APIDir)/nRF52840-DK/userlib"
       debug_register_definition_file="$(NordicSDKDir)/modules/nrfx/mdk/nrf52840.svd"
       debug_target_connection="J-Link"
       gcc_all_warnings_command_line_options=""
@@ -130,6 +130,12 @@
         </file>
         <file file_name="agentlib/Agent.h" />
         <file file_name="agentlib/Agent.c" />
+      </folder>
+      <folder Name="userlib">
+        <file file_name="userlib/user_usbd.c" />
+        <file file_name="userlib/cmatrix.c">
+          <configuration Name="Debug" build_exclude_from_build="Yes" />
+        </file>
       </folder>
     </folder>
     <folder Name="System">

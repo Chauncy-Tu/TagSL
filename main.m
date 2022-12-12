@@ -215,7 +215,7 @@ ylim([0 1.8])
 function GlobalChannels=GlobalChannelsTx(GlobalChannels,Agent,j)
 sigmaD=0.3;
 c=physconst("lightspeed");
-Crange=120;  % communication range
+Crange=1000;  % communication range
 
 
 AgentNum=size(GlobalChannels,2);
@@ -250,7 +250,7 @@ for i=1:a
 %     ri1(i)=c*((Agent.rxtime_buffer_(i+1)-Agent.rxtime_buffer_(1))-Agent.cfo_(i+1)*Agent.t_reply_(i+1))-norm(Agent.pos_buffer_(i+1,:)-Agent.pos_buffer_(1,:));
 
     ri1(i)=c*Agent.tdoa_(i,3)-norm(Agent.map_(Agent.tdoa_(i,1),:)-Agent.map_(Agent.tdoa_(i,2),:));
-    % without CFO calibration
+    % without CFO calKibration
 %     ri1(i)=c*((Agent.rxtime_buffer_(i+1)-Agent.rxtime_buffer_(1))-(response_delay+(i-1)*sequence_delay))-norm(Agent.pos_buffer_(i+1,:)-Agent.pos_buffer_(1,:));
     Ki1(i)=norm(Agent.map_(Agent.tdoa_(i,2),:))^2-norm(Agent.map_(Agent.tdoa_(i,1),:))^2;
     A(i,:)=2*[Agent.map_(Agent.tdoa_(i,2),1)-Agent.map_(Agent.tdoa_(i,1),1),Agent.map_(Agent.tdoa_(i,2),2)-Agent.map_(Agent.tdoa_(i,1),2),ri1(i)];
@@ -260,7 +260,7 @@ b=Ki1-ri1.^2;
 temp=(A.'*A)\A.'*b;
 Agent.p_=temp(1:2);
 temp(1:2)
-a
+
 
 Agent.m_rxtime_=[];
 Agent.s_rxtime_=[];

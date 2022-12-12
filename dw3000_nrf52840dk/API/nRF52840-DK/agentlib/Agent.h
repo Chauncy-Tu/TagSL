@@ -1,6 +1,10 @@
 /****************************************************************/
 /*  macros for the global project */
 
+#include <stdlib.h>
+#include <math.h>
+#include <stdio.h>
+
 // TDMA
 #define SLOT_LENGTH_IN_MS 5
 #define FRAME_LENGTH_IN_S 1
@@ -11,9 +15,11 @@
 #define Tag           2
 // TX DELAY
 #define BLINK_DELAY    500   // μs
-#define RESPONSE_DELAY 500
-#define SEQUENCE_DELAY 300
+#define RESPONSE_DELAY 1000
+#define SEQUENCE_DELAY 1000
 
+#define UUS_TO_DWT_TIME 63898
+#define SPEED_OF_LIGHT   (299702547)
 
 
 #pragma pack(1)
@@ -23,22 +29,22 @@ struct uwb_msg{
     uint8_t frame_type_;    //bit7~1: frame type, 0x00: sync; 0x10: blink, 0x20: response; 
                             //bit0: round counter, 0:first round, 1:second round
     
-    uint8_t frame_cnt;     //frame counter, increase by 1 every second for now
-    uint8_t slot_cnt;
+    uint8_t frame_cnt_;     //frame counter, increase by 1 every second for now
+    uint8_t slot_cnt_;
 
     uint8_t tx_id_;  // the id of the transmitting agent
-    uint8_t mt_id_;  // in slave anchor,id of the
+    uint8_t mt_id_;  // in slave anchor,id of the master anchor
     
-    uint8_t temp1;
-    uint8_t temp2;
-    uint8_t temp3;
+    uint8_t temp1_;
+    uint8_t temp2_;
+    uint8_t temp3_;
 
     float pos_[2];   // position of the tx agent
     uint8_t slave_[4];  // slave_id
     
-    int32_t         t_reply;       //tx-rx
-    uint8_t         user_data[10];  //resered for futuer use, such as the timing sync among multiple anchors
-    uint8_t         crc[2];
+    int32_t         t_reply_;       //tx-rx
+    uint8_t         user_data_[10];  //resered for futuer use, such as the timing sync among multiple anchors
+    uint8_t         crc_[2];
 
 
 };
@@ -55,7 +61,11 @@ struct Agent{
 
     struct uwb_msg tx_msg_,rx_msg_;
 
-    int slave_[4];
+    int64_t tx_time_,rx_time_;
+
+    uint8_t slave_[4];
+
+    float map_[100][2];  //global map：position
   
 };
 
@@ -65,3 +75,66 @@ void agent_run_slot();
 struct Agent agent_init(char role,uint8_t id);
 
 void agent_sync();
+
+void UCarray_copy(uint8_t *a,uint8_t *b,int len);
+void Iarray_copy(int *a,int *b,int len);
+void Farray_copy(float *a,float *b,int len);
+
+void Fang_tdoa(void);
+void tdoa_clear(void);
+
+void Matrix_matmul(float *MatInput1,float *MatInput2,float *MatOutput, int m,int n,int p);
+void Matrix_transpose(float *MatInput,float *MatOutput,int m,int n);
+void Matrix_inverse(float *MatInput, float *MatOutput, int m,int n);
+void matrix_printf(float **a);
+float dist(float *p1, float *p2);
+
+double** inv(double** a, int n);
+
+
+
+
+typedef struct Matrix matrix;
+
+struct Matrix{
+	double** A;
+	int m;
+	int n;
+	double det;
+	matrix* inv;
+	matrix* T;
+};
+
+
+/*行列式*/
+double hhlx(double** arr, int na);
+/*矩阵求逆*/
+double** inv(double** a, int n);
+/*矩阵相乘*/
+double** AB(double** a, int ma, int na, double** b, int mb, int nb);
+/*矩阵转置*/
+double** TA(double** a, int ma, int na);
+
+/*创建m行n列新矩阵*/
+matrix* Mnew(int m, int n);
+/*初始化矩阵*/
+void Minit(matrix* a);
+/*输出矩阵a*/
+void Mprintf(matrix* a);
+/*矩阵a的逆*/
+matrix* Minv(matrix* a);
+/*矩阵a与矩阵b相乘*/
+matrix* Mmulti(matrix* a, matrix* b);
+/*转置矩阵*/
+matrix* Mtrans(matrix* a);
+/*释放矩阵*/
+void mfree(matrix* a);
+void Mfree(matrix* a);
+/*矩阵相加*/
+matrix* Mplus(matrix* a, matrix* b);
+/*矩阵相减*/
+matrix* Mminus(matrix* a, matrix* b);
+/*矩阵点乘*/
+matrix* Mdotpro(matrix* a, matrix* b);
+/*矩阵点除*/
+matrix* Mdiv(matrix* a, matrix* b);
