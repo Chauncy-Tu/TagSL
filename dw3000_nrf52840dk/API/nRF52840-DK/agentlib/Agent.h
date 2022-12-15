@@ -5,6 +5,10 @@
 #include <math.h>
 #include <stdio.h>
 
+/* Default antenna delay values for 64 MHz PRF. See NOTE 2 below. */
+#define TX_ANT_DLY 16385
+#define RX_ANT_DLY 16385
+
 // TDMA
 #define SLOT_LENGTH_IN_MS 5
 #define FRAME_LENGTH_IN_S 1
@@ -16,7 +20,7 @@
 // TX DELAY
 #define BLINK_DELAY    500   // μs
 #define RESPONSE_DELAY 1000
-#define SEQUENCE_DELAY 1000
+#define SEQUENCE_DELAY 500
 
 #define UUS_TO_DWT_TIME 63898
 #define SPEED_OF_LIGHT   (299702547)
@@ -49,6 +53,22 @@ struct uwb_msg{
 
 };
 
+//struct M_RX{
+//  uint8_t m_id;
+//  int64_t rx_time;
+//};
+//struct S_RX{
+//  uint8_t m_id;
+//  uint8_t s_id;
+//  int64_t rx_time;
+//};
+
+//struct TDOA{
+//  uint8_t m_id;
+//  uint8_t s_id;
+//  int64_t tdoa;
+//};
+
 struct Agent{
     char role_;
     uint8_t  id_;
@@ -66,6 +86,14 @@ struct Agent{
     uint8_t slave_[4];
 
     float map_[100][2];  //global map：position
+
+    //int m_rx_cnt=0;
+    //int s_rx_cnt=0;
+    //int tdoa_cnt=0;
+
+    //M_RX m_rx_array[4];
+    //S_RX s_rx_array[4];
+    //TDOA tdoa_array[4];
   
 };
 
@@ -88,53 +116,3 @@ void Matrix_transpose(float *MatInput,float *MatOutput,int m,int n);
 void Matrix_inverse(float *MatInput, float *MatOutput, int m,int n);
 void matrix_printf(float **a);
 float dist(float *p1, float *p2);
-
-double** inv(double** a, int n);
-
-
-
-
-typedef struct Matrix matrix;
-
-struct Matrix{
-	double** A;
-	int m;
-	int n;
-	double det;
-	matrix* inv;
-	matrix* T;
-};
-
-
-/*行列式*/
-double hhlx(double** arr, int na);
-/*矩阵求逆*/
-double** inv(double** a, int n);
-/*矩阵相乘*/
-double** AB(double** a, int ma, int na, double** b, int mb, int nb);
-/*矩阵转置*/
-double** TA(double** a, int ma, int na);
-
-/*创建m行n列新矩阵*/
-matrix* Mnew(int m, int n);
-/*初始化矩阵*/
-void Minit(matrix* a);
-/*输出矩阵a*/
-void Mprintf(matrix* a);
-/*矩阵a的逆*/
-matrix* Minv(matrix* a);
-/*矩阵a与矩阵b相乘*/
-matrix* Mmulti(matrix* a, matrix* b);
-/*转置矩阵*/
-matrix* Mtrans(matrix* a);
-/*释放矩阵*/
-void mfree(matrix* a);
-void Mfree(matrix* a);
-/*矩阵相加*/
-matrix* Mplus(matrix* a, matrix* b);
-/*矩阵相减*/
-matrix* Mminus(matrix* a, matrix* b);
-/*矩阵点乘*/
-matrix* Mdotpro(matrix* a, matrix* b);
-/*矩阵点除*/
-matrix* Mdiv(matrix* a, matrix* b);

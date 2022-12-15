@@ -2,8 +2,6 @@
 <session>
  <Bookmarks/>
  <Breakpoints groups="Breakpoints" active_group="Breakpoints">
-  <BreakpointListItem trigger="" line="437" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="2" filename="agentlib/Agent.c" useHWbreakpoint="false"/>
-  <BreakpointListItem trigger="" line="447" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="2" filename="agentlib/Agent.c" useHWbreakpoint="false"/>
   <BreakpointListItem trigger="" line="3451" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="../Src/decadriver/deca_device.c" useHWbreakpoint="false"/>
   <BreakpointListItem trigger="" line="403" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="../Src/decadriver/deca_regs.h" useHWbreakpoint="false"/>
   <BreakpointListItem trigger="" line="37" counter="0" hardwareBreakpoint="" isFunctionBreakpoint="false" action="" expression="" group="Breakpoints" type="Breakpoint" state="4" filename="../Src/examples/examples_info/example_info.c" useHWbreakpoint="false"/>
@@ -90,15 +88,15 @@
  </TraceWindow>
  <Watch1>
   <Watches active="1" update="Never">
-   <Watchpoint expression="agent" name="agent" radix="10" linenumber="127" filename="Source/main.c"/>
-   <Watchpoint expression="AgentPos" name="AgentPos" radix="10" linenumber="33" filename="Source/main.c"/>
-   <Watchpoint expression="AgentRole" name="AgentRole" radix="-1" linenumber="116" filename="Source/main.c"/>
-   <Watchpoint expression="m_rx_array" name="m_rx_array" radix="10" linenumber="276" filename="agentlib/Agent.c"/>
-   <Watchpoint expression="response_cnt" name="response_cnt" radix="10" linenumber="286" filename="agentlib/Agent.c"/>
-   <Watchpoint expression="s_rx_array" name="s_rx_array" radix="10" linenumber="297" filename="agentlib/Agent.c"/>
-   <Watchpoint expression="t_reply_array" name="t_reply_array" radix="10" linenumber="292" filename="agentlib/Agent.c"/>
-   <Watchpoint expression="tdoa_array" name="tdoa_array" radix="10" linenumber="305" filename="agentlib/Agent.c"/>
-   <Watchpoint expression="B" name="B" radix="10" linenumber="379" filename="agentlib/Agent.c"/>
+   <Watchpoint expression="agent" name="agent" radix="10" linenumber="125" filename="Source/main.c"/>
+   <Watchpoint expression="AgentPos" name="AgentPos" radix="10" linenumber="31" filename="Source/main.c"/>
+   <Watchpoint expression="AgentRole" name="AgentRole" radix="-1" linenumber="114" filename="Source/main.c"/>
+   <Watchpoint expression="m_rx_array" name="m_rx_array" radix="10" linenumber="294" filename="agentlib/Agent.c"/>
+   <Watchpoint expression="response_cnt" name="response_cnt" radix="10" linenumber="304" filename="agentlib/Agent.c"/>
+   <Watchpoint expression="s_rx_array" name="s_rx_array" radix="10" linenumber="325" filename="agentlib/Agent.c"/>
+   <Watchpoint expression="t_reply_array" name="t_reply_array" radix="10" linenumber="320" filename="agentlib/Agent.c"/>
+   <Watchpoint expression="tdoa_array" name="tdoa_array" radix="10" linenumber="333" filename="agentlib/Agent.c"/>
+   <Watchpoint expression="B" name="B" radix="10" linenumber="404" filename="agentlib/Agent.c"/>
   </Watches>
  </Watch1>
  <Watch2>
@@ -111,22 +109,24 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="9" y="157" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="Source/main.c" selected="1" top="134" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="437" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="agentlib/Agent.c" selected="0" top="423" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="85" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="Source/main.c" selected="0" top="76" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="308" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="agentlib/Agent.c" selected="1" top="281" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../Src/config_options.c" selected="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="8" y="55" useTextEdit="1" openedFrom="D:/Lab/Project/TagSL/dw3000_nrf52840dk/API/nRF52840-DK/agentlib/Agent.c" useBinaryEdit="0" left="0" path="../Src/decadriver/deca_device_api.h" selected="0" top="40" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="5" y="3173" useTextEdit="1" openedFrom="D:/Lab/Project/TagSL/dw3000_nrf52840dk/API/nRF52840-DK/Source/main.c" useBinaryEdit="0" left="0" path="../Src/decadriver/deca_device.c" selected="0" top="3169" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="65" y="270" useTextEdit="1" openedFrom="D:/Lab/Project/TagSL/dw3000_nrf52840dk/API/nRF52840-DK/Source/main.c" useBinaryEdit="0" left="0" path="../Src/decadriver/deca_regs.h" selected="0" top="239" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="53" y="196" useTextEdit="1" openedFrom="D:/Lab/Project/TagSL/dw3000_nrf52840dk/API/nRF52840-DK/Source/main.c" useBinaryEdit="0" left="0" path="Source/platform_nRF52840-DK/port.c" selected="0" top="181" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="61" y="123" useTextEdit="1" openedFrom="D:/Lab/Project/TagSL/dw3000_nrf52840dk/API/nRF52840-DK/Source/main.c" useBinaryEdit="0" left="7" path="../Src/decadriver/deca_vals.h" selected="0" top="99" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="33" y="89" useTextEdit="1" openedFrom="D:/Lab/Project/TagSL/dw3000_nrf52840dk/API/nRF52840-DK/agentlib/Agent.c" useBinaryEdit="0" left="0" path="agentlib/Agent.h" selected="0" top="103" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="27" y="22" useTextEdit="1" openedFrom="D:/Lab/Project/TagSL/dw3000_nrf52840dk/API/nRF52840-DK/agentlib/Agent.c" useBinaryEdit="0" left="0" path="agentlib/Agent.h" selected="0" top="42" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="13" y="11" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../C-matrix/cmatrix.h" selected="0" top="0" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="16" y="5" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../C-matrix/main.c" selected="0" top="3" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="1" y="178" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../C-matrix/cmatrix.c" selected="0" top="144" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="52" y="393" useTextEdit="1" openedFrom="D:/Lab/Project/TagSL/dw3000_nrf52840dk/API/nRF52840-DK/Source/main.c" useBinaryEdit="0" left="0" path="SDK/components/toolchain/cmsis/include/cmsis_gcc.h" selected="0" top="362" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="23" y="296" useTextEdit="1" openedFrom="D:/Lab/Project/TagSL/dw3000_nrf52840dk/API/nRF52840-DK/Source/main.c" useBinaryEdit="0" left="0" path="Source/platform_nRF52840-DK/deca_spi.c" selected="0" top="138" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="67" useTextEdit="1" openedFrom="D:/Lab/Project/TagSL/dw3000_nrf52840dk/API/nRF52840-DK/Source/platform_nRF52840-DK/deca_spi.c" useBinaryEdit="0" left="0" path="Source/platform_nRF52840-DK/deca_spi.h" selected="0" top="45" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="27" y="69" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="SDK/modules/nrfx/mdk/ses_startup_nrf52840.s" selected="0" top="58" codecName=""/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../double buffer/deca_device.c" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="58" y="89" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../double buffer/dw1000.c" selected="0" top="85" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="57" y="54" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../double buffer/dw1000.h" selected="0" top="43" codecName="Default"/>
  </Files>
  <ARMCrossStudioWindow activeProject="TagSL" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="D:/Lab/Project/TagSL/dw3000_nrf52840dk/API/nRF52840-DK/userlib" debugSearchPath="" autoConnectCapabilities="3711"/>
 </session>

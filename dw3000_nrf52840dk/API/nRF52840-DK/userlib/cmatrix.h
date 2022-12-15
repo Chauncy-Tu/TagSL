@@ -8,9 +8,9 @@ struct Matrix{
 	double** A;
 	int m;
 	int n;
-	double det;
-	matrix* inv;
-	matrix* T;
+	//double det;
+	//matrix* inv;
+	//matrix* T;
 };
 
 

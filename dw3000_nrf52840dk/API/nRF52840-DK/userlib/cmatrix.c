@@ -16,9 +16,9 @@ double hhlx(double** arr, int na)
 			{
 				double** arr1;
 				arr1 = (double**)malloc((na - 1) * sizeof(double));
-				for (int i = 0; i < na - 1; i++)
+				for (int j = 0; j < na - 1; j++)
 				{
-					arr1[i] = (double*)malloc((na - 1) * sizeof(double));
+					arr1[j] = (double*)malloc((na - 1) * sizeof(double));
 				}
 				for (int j = 1; j < na; j++)
 				{
@@ -35,9 +35,9 @@ double hhlx(double** arr, int na)
 					}
 				}
 				s = s + hhlx(arr1, na - 1) * pow(-1, i) * arr[0][i];
-				for (int i = 0; i < na - 1; i++)
+				for (int j = 0; j < na - 1; j++)
 				{
-					free(arr1[i]);
+					free(arr1[j]);
 				}
 				free(arr1);
 			}
@@ -108,6 +108,13 @@ double** inv(double** a, int n)
 			ai[i][j] = as[i][j] / det;
 		}
 	}
+
+        for (int i = 0; i < n ; i++)
+        {
+                free(as[i]);
+        }
+        free(as);
+
 	return ai;
 }
 
@@ -177,20 +184,21 @@ matrix* Mnew(int m, int n)
 
 void Minit(matrix* a)
 {
-	a->inv = Minv(a);
-	a->inv->inv = a;
-	a->T = Mtrans(a);
-	a->T->T = a;
-	a->inv->T = Mtrans(a->inv);
-	a->T->inv = a->inv->T;
-	a->inv->T->T = a->inv;
-	a->T->inv->inv = a->T;
-	a->inv->T->inv = a->T;
-	a->T->inv->T = a->inv;
-	a->det = hhlx(a->A, a->m);
-	a->inv->det = 1 / a->det;
-	a->T->det = a->det;
-	a->inv->T->det = a->inv->det;
+	//a->inv = Minv(a);
+	//a->inv->inv = a;
+	//a->T = Mtrans(a);
+ //       Mprintf(a->T);
+	//a->T->T = a;
+	//a->inv->T = Mtrans(a->inv);
+	//a->T->inv = a->inv->T;
+	//a->inv->T->T = a->inv;
+	//a->T->inv->inv = a->T;
+	//a->inv->T->inv = a->T;
+	//a->T->inv->T = a->inv;
+	//a->det = hhlx(a->A, a->m);
+	//a->inv->det = 1 / a->det;
+	//a->T->det = a->det;
+	//a->inv->T->det = a->inv->det;
 }
 
 void Mprintf(matrix* a)
@@ -331,8 +339,8 @@ void mfree(matrix* a)
 
 void Mfree(matrix* a)
 {
-	mfree(a->inv->T);
-	mfree(a->inv);
-	mfree(a->T);
+	//mfree(a->inv->T);
+	//mfree(a->inv);
+	//mfree(a->T);
 	mfree(a);
 }

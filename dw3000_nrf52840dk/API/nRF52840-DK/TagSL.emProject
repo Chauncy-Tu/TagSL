@@ -134,6 +134,9 @@
       <folder Name="userlib">
         <file file_name="userlib/user_usbd.c" />
         <file file_name="userlib/cmatrix.c">
+          <configuration Name="Debug" build_exclude_from_build="No" />
+        </file>
+        <file file_name="userlib/Mycmatrix.c">
           <configuration Name="Debug" build_exclude_from_build="Yes" />
         </file>
       </folder>

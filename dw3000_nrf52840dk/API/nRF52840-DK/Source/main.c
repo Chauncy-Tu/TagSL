@@ -25,9 +25,7 @@ Purpose : Nordic nRF52840-DK build main entry point for the project.
 
 
 #define UNIT_TEST 0
-/* Default antenna delay values for 64 MHz PRF. See NOTE 2 below. */
-#define TX_ANT_DLY 16385
-#define RX_ANT_DLY 16385
+
 
 
 /* function declaration */
@@ -75,12 +73,16 @@ struct  Agent agent;
 //char    AgentRole=Slave_Anchor;
 //uint8_t AgentID=5;
 
+
+
 char    AgentRole=Tag;
 uint8_t AgentID=6;
 
+float   AgentPos[2]={1,-1};
+
 uint8_t AgentSlotNum=10;
-float   AgentPos[2]={1,1};
 uint8_t AgentSlave[4]={2,3,4,5};
+
 
 
 
@@ -149,11 +151,11 @@ int main(void) {
          agent_run_slot();
          slot_event_=0;			
        }
-       while(app_usbd_event_queue_process())
-       {
-       }
+       //while(app_usbd_event_queue_process())
+       //{
+       //}
 
-       usb_send(a,3);
+       //usb_send(a,3);
 
        //__WFE();
 
@@ -258,11 +260,11 @@ void dw3000_init()
     /*dw3000 callback function setting*/   
     dwt_setcallbacks(&tx_ok_cb, &rx_ok_cb, &rx_err_cb, &rx_err_cb, NULL, NULL);
 
-    //dwt_setinterrupt(SYS_ENABLE_LO_TXFRS_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXFCG_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXFTO_ENABLE_BIT_MASK |
-    //        SYS_ENABLE_LO_RXPTO_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXPHE_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXFCE_ENABLE_BIT_MASK |
-    //        SYS_ENABLE_LO_RXFSL_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXSTO_ENABLE_BIT_MASK, 0, DWT_ENABLE_INT);
+    dwt_setinterrupt(SYS_ENABLE_LO_TXFRS_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXFCG_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXFTO_ENABLE_BIT_MASK |
+            SYS_ENABLE_LO_RXPTO_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXPHE_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXFCE_ENABLE_BIT_MASK |
+            SYS_ENABLE_LO_RXFSL_ENABLE_BIT_MASK | SYS_ENABLE_LO_RXSTO_ENABLE_BIT_MASK, 0, DWT_ENABLE_INT);
 
-    dwt_setinterrupt(SYS_STATUS_RXFCG_BIT_MASK | SYS_STATUS_ALL_RX_ERR | SYS_STATUS_TXFRS_BIT_MASK, 0, DWT_ENABLE_INT);
+    //dwt_setinterrupt(SYS_STATUS_RXFCG_BIT_MASK | SYS_STATUS_ALL_RX_ERR | SYS_STATUS_TXFRS_BIT_MASK, 0, DWT_ENABLE_INT);
     /* Install DW IC IRQ handler. */
     port_set_dwic_isr(dwt_isr);
 
@@ -274,12 +276,16 @@ void dw3000_init()
     dwt_setrxantennadelay(RX_ANT_DLY);
     dwt_settxantennadelay(TX_ANT_DLY);
     
+
+    if(agent.role_==Tag)
+    {
+      dwt_setdblrxbuffmode(DBL_BUF_STATE_EN,DBL_BUF_MODE_MAN);  //Enable double buff - Manual mode
+      dwt_configciadiag(DW_CIA_DIAG_LOG_MIN);//Enable diagnostic mode - minimal
+    }
+
+    nrf_delay_ms(200);
+
     dwt_forcetrxoff();
-    //dwt_setdblrxbuffmode(DBL_BUF_STATE_EN,DBL_BUF_MODE_MAN);  //Enable double buff - Manual mode
-
-
-   
-
     dwt_rxenable(DWT_START_RX_IMMEDIATE);
 
     
