@@ -10,6 +10,8 @@
 #include <Agent.h>
 //#include <Mycmatrix.h>
 #include <cmatrix.h>
+#include "app_usbd.h" 
+#include "user_usbd.h"
 
 uint8_t response_cnt_=0;
 uint8_t frame_cnt_ = 0;
@@ -18,17 +20,21 @@ uint32_t status_reg;
 uint8_t resp[4]={0,0,0,0};
 int64_t rx_times_[4];
 
-struct M_RX{
+int64_t sniffer_rx_time[6]={0,0,0,0,0,0};
+int sniffer_rx_cnt=0;
+
+
+static struct M_RX{
   uint8_t m_id;
   int64_t rx_time;
 };
-struct S_RX{
+static struct S_RX{
   uint8_t m_id;
   uint8_t s_id;
   int64_t rx_time;
 };
 
-struct TDOA{
+static struct TDOA{
   uint8_t m_id;
   uint8_t s_id;
   int64_t tdoa;
@@ -38,12 +44,18 @@ static int m_rx_cnt=0;
 static int s_rx_cnt=0;
 static int tdoa_cnt=0;
 
-struct M_RX m_rx_array[4];
-struct S_RX s_rx_array[4];
-struct TDOA tdoa_array[4];
+static struct M_RX m_rx_array[4];
+static struct S_RX s_rx_array[4];
+static struct TDOA tdoa_array[4];
 
+static int tdoa_sum_cnt=0;
 
 int32_t t_reply_array[4];
+
+int64_t tdoa_cal=0;
+
+static int slot_cnt_record[6]={0,0,0,0,0,0};
+int slot_cnt_record_cnt=0;
 
 
 extern struct Agent agent;  // extern val, defined in main
@@ -66,21 +78,18 @@ static int send_uwb_frame_immediate()
 }
 
 
-
-
-
-static int send_uwb_sync()
+static int send_uwb_test()
 {
-    agent.tx_msg_.frame_type_ = 0x00;       // sync msg
+    dwt_forcetrxoff(); 
+    agent.tx_msg_.frame_type_ = 0x03;       // sync msg
 
     agent.tx_msg_.frame_cnt_ = frame_cnt_;
     agent.tx_msg_.slot_cnt_ = slot_cnt_;
     agent.tx_msg_.t_reply_ = 0;
     agent.tx_msg_.tx_id_ = agent.id_;
     
-    Farray_copy(agent.tx_msg_.pos_,agent.pTrue_,sizeof(agent.pTrue_)/sizeof(agent.pTrue_[0]));
-    
-    dwt_forcetrxoff();  
+    Farray_copy(agent.tx_msg_.pos_,agent.pTrue_,sizeof(agent.pTrue_)/sizeof(agent.pTrue_[0]));   
+     
     dwt_writetxdata(sizeof(agent.tx_msg_) - 2, (uint8_t *)&agent.tx_msg_, 0);
     dwt_writetxfctrl(sizeof(agent.tx_msg_), 0, 1);
     if (dwt_starttx(DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED) != DWT_SUCCESS) {
@@ -91,23 +100,49 @@ static int send_uwb_sync()
    
 }
 
+
+static int send_uwb_sync()
+{
+    dwt_forcetrxoff(); 
+    agent.tx_msg_.frame_type_ = 0x00;       // sync msg
+
+    agent.tx_msg_.frame_cnt_ = frame_cnt_;
+    agent.tx_msg_.slot_cnt_ = slot_cnt_;
+    agent.tx_msg_.t_reply_ = 0;
+    agent.tx_msg_.tx_id_ = agent.id_;
+    
+    Farray_copy(agent.tx_msg_.pos_,agent.pTrue_,sizeof(agent.pTrue_)/sizeof(agent.pTrue_[0]));   
+     
+    dwt_writetxdata(sizeof(agent.tx_msg_) - 2, (uint8_t *)&agent.tx_msg_, 0);
+    dwt_writetxfctrl(sizeof(agent.tx_msg_), 0, 1);
+    if(dwt_starttx(DWT_START_TX_IMMEDIATE) != DWT_SUCCESS) {
+    }
+    
+    return 0;
+   
+}
+
 static int send_uwb_blink()
 {
+    dwt_forcetrxoff();  
     agent.tx_msg_.frame_type_ = 0x01;       // blink msg
     agent.tx_msg_.frame_cnt_ = frame_cnt_;
     agent.tx_msg_.slot_cnt_ = slot_cnt_;
     agent.tx_msg_.t_reply_ = 0;
     agent.tx_msg_.tx_id_ = agent.id_;
 
+
     Farray_copy(agent.tx_msg_.pos_,agent.pTrue_,sizeof(agent.pTrue_)/sizeof(agent.pTrue_[0]));
     UCarray_copy(agent.tx_msg_.slave_,agent.slave_,sizeof(agent.slave_)/sizeof(agent.slave_[0]));
+
+    uint64_t systime=0;
+    systime = (uint64_t)dwt_readsystimestamphi32() << 8;
+    uint32_t delaytxtime = ((systime + (BLINK_DELAY * UUS_TO_DWT_TIME)) >> 8) & 0xFFFFFF00;
+    dwt_setdelayedtrxtime(delaytxtime);
     
-    
-    dwt_forcetrxoff();  
     dwt_writetxdata(sizeof(agent.tx_msg_) - 2, (uint8_t *)&agent.tx_msg_, 0);
     dwt_writetxfctrl(sizeof(agent.tx_msg_), 0, 1);
-    if (dwt_starttx(DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED) != DWT_SUCCESS) {
-        dwt_rxenable(DWT_START_RX_IMMEDIATE);
+    if (dwt_starttx(DWT_START_TX_DELAYED != DWT_SUCCESS)) {
     }
     
     return 0;
@@ -115,6 +150,7 @@ static int send_uwb_blink()
 
 static int send_uwb_response(uint8_t mt_id, int seq)
 {
+    dwt_forcetrxoff();
     agent.tx_msg_.frame_type_ = 0x02;       // blink msg
     agent.tx_msg_.frame_cnt_ = frame_cnt_;
     agent.tx_msg_.slot_cnt_ = slot_cnt_;
@@ -124,12 +160,6 @@ static int send_uwb_response(uint8_t mt_id, int seq)
 
     Farray_copy(agent.tx_msg_.pos_,agent.pTrue_,sizeof(agent.pTrue_)/sizeof(agent.pTrue_[0]));
     
-    
-    
-    uint64_t systime = 0;
-    dwt_forcetrxoff();
-    
-    //systime = (uint64_t)dwt_readsystimestamphi32() << 8;
     uint32_t delaytxtime = ((agent.rx_time_ + ((RESPONSE_DELAY+seq*SEQUENCE_DELAY) * UUS_TO_DWT_TIME)) >> 8) & 0xFFFFFF00;
     dwt_setdelayedtrxtime(delaytxtime);
     agent.tx_time_ = (uint64_t)delaytxtime << 8;
@@ -140,9 +170,6 @@ static int send_uwb_response(uint8_t mt_id, int seq)
     // starttime + the transmit antenna delay.
 
 
-   
-
-    //printf("\r\nt_reply:%d",agent.tx_msg_.t_reply_);
     
     dwt_writetxdata(sizeof(agent.tx_msg_) - 2, (uint8_t *)&agent.tx_msg_, 0);
     dwt_writetxfctrl(sizeof(agent.tx_msg_), 0, 1);
@@ -150,18 +177,8 @@ static int send_uwb_response(uint8_t mt_id, int seq)
     if (dwt_starttx(DWT_START_TX_DELAYED | DWT_RESPONSE_EXPECTED) != DWT_SUCCESS) {
         dwt_rxenable(DWT_START_RX_IMMEDIATE);
     }
-    //printf("\r\nt_reply:%d",agent.tx_msg_.t_reply_);
-
-
-    
-    
-    
-
     return 0;
 }
-
-
-
 
 
 
@@ -188,22 +205,21 @@ void agent_run_slot(void)
     {
       slot_cnt_ = 0;
       frame_cnt_ ++;
-      printf("\r\nframe_cnt:%d",frame_cnt_);
-      printf("\r\nresponse_cnt:%d",response_cnt_);
-      response_cnt_=0;
+      //printf("\r\nframe_cnt:%d",frame_cnt_);
+      //printf("\r\nresponse_cnt:%d",response_cnt_);
+      //response_cnt_=0;
 
-      for(int i=0;i<4;i++)
-      {
-        printf("\r\n id:%d",resp[i]);
-        resp[i]=0;
-      }
-      for(int i=0;i<4;i++)
-      {
-        printf("\r\n rx_time:%lld",rx_times_[i]);
-        rx_times_[i]=0;
-      }
-      
-      
+      //for(int i=0;i<4;i++)
+      //{
+      //  printf("\r\n id:%d",resp[i]);
+      //  resp[i]=0;
+      //}
+      //for(int i=0;i<4;i++)
+      //{
+      //  printf("\r\n rx_time:%lld",rx_times_[i]);
+      //  rx_times_[i]=0;
+      //}
+        
       
     }
     
@@ -218,16 +234,79 @@ void agent_run_slot(void)
       {
         send_uwb_blink();
       }
+
     }
+
+
     else if(agent.role_==Slave_Anchor)
     {
-      
     }
     else if(agent.role_==Tag)
     {
-      
+      if(slot_cnt_==100)
+      {
+        //printf("\r\nframe_cnt:%d",frame_cnt_);
+        //printf("\r\nresponse_cnt:%d",response_cnt_);
+        response_cnt_=0;
+
+        
+
+        //for(int i=0;i<4;i++)
+        //{
+        //  printf("\r\n id:%d",resp[i]);
+        //  resp[i]=0;
+        //}
+        //for(int i=0;i<4;i++)
+        //{
+        //  printf("\r\n rx_time:%lld",rx_times_[i]);
+        //  rx_times_[i]=0;
+        //}
+
+
+        //for(int i=0;i<6;i++)
+        //{
+        //  printf("\r\nslot_cnt_record%d:%d",i,slot_cnt_record[i]);
+          
+        //}
+        //for(int i=0;i<6;i++)
+        //{
+        //  slot_cnt_record[i]=0;
+        //}
+        slot_cnt_record_cnt=0;
+      }
 
     }
+    else if(agent.role_==Sniffer)
+    {
+      if(slot_cnt_==20)
+      {
+        printf("\r\nframe_cnt:%d",frame_cnt_);
+        for(int i=0;i<6;i++)
+        {
+          printf("\r\nrx_time(%d)=%lld;",i+1,(sniffer_rx_time[i]));
+          
+        }
+        for(int i=0;i<6;i++)
+        {
+          sniffer_rx_time[i]=0;
+        }
+        for(int i=0;i<6;i++)
+        {
+          printf("\r\nslot_cnt_record(%d)=%d;",i,slot_cnt_record[i]);
+          
+        }
+        for(int i=0;i<6;i++)
+        {
+          slot_cnt_record[i]=0;
+        }
+        slot_cnt_record_cnt=0;
+        
+        sniffer_rx_cnt=0;
+      }
+    }
+
+
+    
 
 
   
@@ -251,14 +330,10 @@ void rx_ok_cb(const dwt_cb_data_t *cb_data)
   dwt_readrxdata((uint8_t *)&agent.rx_msg_, frame_len, 0);
 
 
-  
-
-
   uint8_t frame_type = agent.rx_msg_.frame_type_;
   uint8_t tx_id=agent.rx_msg_.tx_id_;
   uint8_t mt_id=agent.rx_msg_.mt_id_;
   uint8_t slave[4];
-  
   UCarray_copy(slave, agent.rx_msg_.slave_,sizeof(agent.rx_msg_.slave_)/sizeof(agent.rx_msg_.slave_[0]));
 
 
@@ -270,7 +345,8 @@ void rx_ok_cb(const dwt_cb_data_t *cb_data)
       NRFX_IRQ_PENDING_CLEAR(SysTick_IRQn);
       SystemCoreClockUpdate();
       SysTick_Config(SystemCoreClock / 1000 * SLOT_LENGTH_IN_MS);
-      //printf("\r\nsync rx ok");
+      slot_cnt_=0;
+      frame_cnt_=agent.rx_msg_.frame_cnt_;
 
       
     }else if(frame_type==0x01)
@@ -287,22 +363,36 @@ void rx_ok_cb(const dwt_cb_data_t *cb_data)
     
     dwt_rxenable(DWT_START_RX_IMMEDIATE);
   }
-
-  if(agent.role_==Tag)
+  else if(agent.role_==Tag)
   {
+
+    if(slot_cnt_record_cnt>=0&&slot_cnt_record_cnt<6)
+    {
+      slot_cnt_record[slot_cnt_record_cnt]=agent.rx_msg_.slot_cnt_;
+      slot_cnt_record_cnt++;
+    }
+
+    
     if(frame_type==0x00)  // sync frame
     {
       NRFX_IRQ_PENDING_CLEAR(SysTick_IRQn);
       SystemCoreClockUpdate();
-      SysTick_Config(SystemCoreClock / 1000 * SLOT_LENGTH_IN_MS);    
+      SysTick_Config(SystemCoreClock / 1000 * SLOT_LENGTH_IN_MS);   
+      slot_cnt_=0;
+      frame_cnt_=agent.rx_msg_.frame_cnt_;
+
       Farray_copy(agent.map_[tx_id],agent.rx_msg_.pos_,sizeof(agent.rx_msg_.pos_)/sizeof(agent.rx_msg_.pos_[0]));
-      //printf("\r\nsync rx");
       
     }else if(frame_type==0x01) // blink frame
     {
-      m_rx_array[m_rx_cnt].m_id=tx_id;
-      m_rx_array[m_rx_cnt].rx_time=agent.rx_time_;
-      m_rx_cnt++;
+      if(m_rx_cnt<4&&m_rx_cnt>=0)
+      {
+        m_rx_array[m_rx_cnt].m_id=tx_id;
+        m_rx_array[m_rx_cnt].rx_time=agent.rx_time_;
+        m_rx_cnt++;
+      }else{
+        m_rx_cnt=0;
+      }
       Farray_copy(agent.map_[tx_id],agent.rx_msg_.pos_,sizeof(agent.rx_msg_.pos_)/sizeof(agent.rx_msg_.pos_[0]));
       //printf("\r\nblink rx");
       
@@ -312,31 +402,47 @@ void rx_ok_cb(const dwt_cb_data_t *cb_data)
       resp[response_cnt_]=tx_id;
       response_cnt_++;
       int32_t t_reply=agent.rx_msg_.t_reply_;
+      Farray_copy(agent.map_[tx_id],agent.rx_msg_.pos_,sizeof(agent.rx_msg_.pos_)/sizeof(agent.rx_msg_.pos_[0]));
 
 
-      //t_reply_array[s_rx_cnt]=t_reply;
       for(int i=0;i<m_rx_cnt;i++)
       {
         if(m_rx_array[i].m_id==mt_id)
         {
-          s_rx_array[s_rx_cnt].m_id=mt_id;
-          s_rx_array[s_rx_cnt].s_id=tx_id;
-          s_rx_array[s_rx_cnt].rx_time=agent.rx_time_;
-          s_rx_cnt++;
+          if(s_rx_cnt<4&&s_rx_cnt>=0)
+          {
+            s_rx_array[s_rx_cnt].m_id=mt_id;
+            s_rx_array[s_rx_cnt].s_id=tx_id;
+            s_rx_array[s_rx_cnt].rx_time=agent.rx_time_;
+            s_rx_cnt++;
+          }else{
+            s_rx_cnt=0;
+          }
 
           int64_t m_rxtime=m_rx_array[i].rx_time;
           int64_t s_rxtime=agent.rx_time_;
+          
+       
 
-          tdoa_array[tdoa_cnt].m_id=mt_id;
-          tdoa_array[tdoa_cnt].s_id=tx_id;
-          tdoa_array[tdoa_cnt].tdoa=((s_rxtime-m_rxtime)-(1.0-clockOffsetRatio)*t_reply); 
-          //TODO   cfo + or -
+          if(tdoa_cnt<4&&tdoa_cnt>=0)
+          {
+            tdoa_array[tdoa_cnt].m_id=mt_id;
+            tdoa_array[tdoa_cnt].s_id=tx_id;
+            tdoa_array[tdoa_cnt].tdoa=((s_rxtime-m_rxtime)-(1.0-clockOffsetRatio)*t_reply); 
+            //TODO   cfo + or -
+            //printf("\r\n tdoa:%lld",tdoa_array[tdoa_cnt].tdoa);
+            
+            tdoa_cal=tdoa_array[tdoa_cnt].tdoa;
+            
+            tdoa_cnt++;
+            
+          }else{
+            tdoa_cnt=0;
+          }
 
-          tdoa_cnt++;
           if(tdoa_cnt==4)
           {
-            //Fang_tdoa();
-
+            Fang_tdoa();
             tdoa_clear();
 
             break;
@@ -344,20 +450,40 @@ void rx_ok_cb(const dwt_cb_data_t *cb_data)
           
         }
       }
-      Farray_copy(agent.map_[tx_id],agent.rx_msg_.pos_,sizeof(agent.rx_msg_.pos_)/sizeof(agent.rx_msg_.pos_[0]));
+    }
+      
       
 
+      
+
+      
+    }
+    else if (agent.role_==Sniffer)
+    {
+      if(frame_type==0x00)  // sync frame
+      {
+        NRFX_IRQ_PENDING_CLEAR(SysTick_IRQn);
+        SystemCoreClockUpdate();
+        SysTick_Config(SystemCoreClock / 1000 * SLOT_LENGTH_IN_MS);   
+        slot_cnt_=0;
+        frame_cnt_=agent.rx_msg_.frame_cnt_; 
       }
-
-      //dwt_signal_rx_buff_free();
-      
+      if(sniffer_rx_cnt>=0&&sniffer_rx_cnt<6)
+      {
+      sniffer_rx_time[sniffer_rx_cnt]=agent.rx_time_;
+      sniffer_rx_cnt++;
+      }
+      if(slot_cnt_record_cnt>=0&&slot_cnt_record_cnt<6)
+      {
+        slot_cnt_record[slot_cnt_record_cnt]=agent.rx_msg_.slot_cnt_;
+        slot_cnt_record_cnt++;
+      }
     }
     
     
-    
   
   
-  //dwt_forcetrxoff();
+ 
   
 
 
@@ -412,11 +538,32 @@ void Fang_tdoa(void)
   //double A[4][3]={-100,100,99.2797,100,100,-48.3271,100,-100,31.7534,-100,-100,135.3482};
   //double b[4]={2535.8866,4.416121928898527e+03,4.747930262545749e+03,4.202134211714574e+02};
 
+  //float t1[4]={25651,9921,18455,29495};
+  //agent.map_[1][0]=0;
+  //agent.map_[1][1]=0;
+  //agent.map_[2][0]=-50;
+  //agent.map_[2][1]=50;
+  //agent.map_[3][0]=50;
+  //agent.map_[3][1]=50;
+  //agent.map_[4][0]=50;
+  //agent.map_[4][1]=-50;
+  //agent.map_[5][0]=-50;
+  //agent.map_[5][1]=-50;
+
+
+  //for(int i=0;i<4;i++)
+  //{
+  //  tdoa_array[i].tdoa=t1[i];
+  //}
+  
+
 
 
   for(int i=0;i<4;i++)
   {
     float origin[2]={0,0};
+    
+
     ri1[i]=SPEED_OF_LIGHT*tdoa_array[i].tdoa*DWT_TIME_UNITS-dist(agent.map_[tdoa_array[i].m_id],agent.map_[tdoa_array[i].s_id]);
     Ki1[i]=dist(agent.map_[tdoa_array[i].s_id],origin)*dist(agent.map_[tdoa_array[i].s_id],origin)-dist(agent.map_[tdoa_array[i].m_id],origin)*dist(agent.map_[tdoa_array[i].m_id],origin);
     A[i][0]=2*(agent.map_[tdoa_array[i].s_id][0]-agent.map_[tdoa_array[i].m_id][0]);
@@ -426,7 +573,7 @@ void Fang_tdoa(void)
     b[i]=Ki1[i]-ri1[i]*ri1[i];
   }
 
-  matrix *Mat_A, *Mat_AT, *Mat_ATA_inv, *Mat_b;
+  matrix *Mat_A, *Mat_AT, *Mat_ATA_inv, *Mat_b,*Mat_temp1,*Mat_temp2,*Mat_temp3;
   Mat_A = Mnew(4, 3);
   Mat_b = Mnew(4, 1);
   for(int i=0;i<4;i++)
@@ -438,9 +585,7 @@ void Fang_tdoa(void)
       Mat_A->A[i][j]=A[i][j];
     }
   }
-
   Mat_AT=Mtrans(Mat_A);
-  matrix *Mat_temp1,*Mat_temp2,*Mat_temp3;
   Mat_temp1=Mmulti(Mat_AT,Mat_A);
   Mat_ATA_inv=Minv(Mat_temp1);
   Mat_temp2=Mmulti(Mat_ATA_inv,Mat_AT);
@@ -459,8 +604,17 @@ void Fang_tdoa(void)
   Mfree(Mat_temp2);
   Mfree(Mat_temp3);
 
-  printf("\r\n %f  %f",agent.p_[0],agent.p_[1]);
-
+  //printf("\r\n %f  %f",agent.p_[0],agent.p_[1]);
+  
+  for(int i=0;i<4;i++)
+  {
+    if(tdoa_array[i].s_id==2)
+    {
+      tdoa_sum_cnt++;
+      printf("\r\ntdoa(%d)=%lld",tdoa_sum_cnt,tdoa_array[i].tdoa);
+    }
+  }
+  
   
 
 

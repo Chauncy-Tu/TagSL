@@ -18,10 +18,10 @@ Purpose : Nordic nRF52840-DK build main entry point for the project.
 #include <deca_vals.h>
 #include <deca_regs.h>
 
-#include <app_usbd.h>
+#include "app_usbd.h"
 
 #include <Agent.h>
-#include <user_usbd.h>
+#include "user_usbd.h"
 
 
 #define UNIT_TEST 0
@@ -55,6 +55,9 @@ static dwt_config_t config = {
 
 extern dwt_txconfig_t txconfig_options;
 
+extern int64_t tdoa_cal;
+bool print_flag=0;
+
 extern void rx_ok_cb(const dwt_cb_data_t *cb_data);
 extern void rx_to_cb(const dwt_cb_data_t *cb_data);
 extern void rx_err_cb(const dwt_cb_data_t *cb_data);
@@ -65,42 +68,29 @@ uint8_t slot_event_ = 0;
 
 struct  Agent agent;
 
-
 //char    AgentRole=Master_Anchor;
 //uint8_t AgentID=1;
 
 
 //char    AgentRole=Slave_Anchor;
-//uint8_t AgentID=5;
-
-
+//uint8_t AgentID=2;
 
 char    AgentRole=Tag;
 uint8_t AgentID=6;
 
-float   AgentPos[2]={1,-1};
+//char    AgentRole=Sniffer;
+//uint8_t AgentID=10;
 
-uint8_t AgentSlotNum=10;
+
+float   AgentPos[2]={0,0};
+
+uint8_t AgentSlotNum=2;
 uint8_t AgentSlave[4]={2,3,4,5};
 
 
 
 
 int main(void) {
-    /* USER CODE BEGIN 1 */
-
-    /* USER CODE END 1 */
-
-    /* MCU Configuration----------------------------------------------------------*/
- 
-    /* Reset of all peripherals (if attached). *
-
-    /* USER CODE BEGIN Init */
-    //user_init_usbd();
-    /* USER CODE END Init */
-
-    /* USER CODE BEGIN SysInit */
-    /* USER CODE END SysInit */
 
     // nRF52840 initialization
     nRF52840_init();
@@ -124,7 +114,7 @@ int main(void) {
         printf("\r\n%X",dev_id);
         
     }
-    
+
     agent=agent_init(AgentRole,AgentID);
     // assign position
     agent.pTrue_[0]=AgentPos[0];
@@ -139,7 +129,9 @@ int main(void) {
     
 
 
-    char a[3]="abc";
+    
+    
+    char a[4]="\nabc";
 
 
 
@@ -149,33 +141,28 @@ int main(void) {
        if(slot_event_)
        {
          agent_run_slot();
-         slot_event_=0;			
+         slot_event_=0;
+         //print_flag=1;		
        }
-       //while(app_usbd_event_queue_process())
+
+       //***************  uart output
+       // while(app_usbd_event_queue_process())
        //{
        //}
-
-       //usb_send(a,3);
-
-       //__WFE();
+       //if(print_flag)
+       //{
+         
+       //  //uint8_t a[3]="abc";
+       //  //sprintf(a,"\n tdoa:%d ",(int)tdoa_cal);
+       //   //printf("\r\nlen:%d",strlen(a));
+       //  usb_send(a,4);
+       //  print_flag=0;    
+       //}
+       // __WFE();
+       //***************  uart output
+      
 
     }
-
-
-    /* USER CODE END 2 */
-
-    /* Infinite loop */
-    /* USER CODE BEGIN WHILE */
-    //while (1)
-    //{
-
-    ///* USER CODE END WHILE */
-
-    ///* USER CODE BEGIN 3 */
-    //    printf("%d\r\n",1);
-
-    //}
-    /* USER CODE END 3 */
 
 }
 
@@ -196,6 +183,7 @@ void test_run_info(unsigned char *data)
 void SysTick_Handler(void)     // invoke this function at the beginning of every slot
 {
     slot_event_ = 1;
+    
 }
 
 
@@ -211,7 +199,7 @@ void nRF52840_init()
     dw_irq_init();
 
     /* Small pause before startup */
-    nrf_delay_ms(2);
+    nrf_delay_ms(200);
 
 }
 
@@ -277,7 +265,7 @@ void dw3000_init()
     dwt_settxantennadelay(TX_ANT_DLY);
     
 
-    if(agent.role_==Tag)
+    if(agent.role_==Tag || agent.role_==Sniffer)
     {
       dwt_setdblrxbuffmode(DBL_BUF_STATE_EN,DBL_BUF_MODE_MAN);  //Enable double buff - Manual mode
       dwt_configciadiag(DW_CIA_DIAG_LOG_MIN);//Enable diagnostic mode - minimal

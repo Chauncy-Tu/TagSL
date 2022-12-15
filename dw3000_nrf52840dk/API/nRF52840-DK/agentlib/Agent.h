@@ -6,8 +6,8 @@
 #include <stdio.h>
 
 /* Default antenna delay values for 64 MHz PRF. See NOTE 2 below. */
-#define TX_ANT_DLY 16385
-#define RX_ANT_DLY 16385
+#define TX_ANT_DLY 16320
+#define RX_ANT_DLY 16320
 
 // TDMA
 #define SLOT_LENGTH_IN_MS 5
@@ -17,8 +17,9 @@
 #define Master_Anchor 0
 #define Slave_Anchor  1
 #define Tag           2
+#define Sniffer       3
 // TX DELAY
-#define BLINK_DELAY    500   // ¦Ìs
+#define BLINK_DELAY    1500   // ¦Ìs
 #define RESPONSE_DELAY 1000
 #define SEQUENCE_DELAY 500
 
@@ -53,22 +54,6 @@ struct uwb_msg{
 
 };
 
-//struct M_RX{
-//  uint8_t m_id;
-//  int64_t rx_time;
-//};
-//struct S_RX{
-//  uint8_t m_id;
-//  uint8_t s_id;
-//  int64_t rx_time;
-//};
-
-//struct TDOA{
-//  uint8_t m_id;
-//  uint8_t s_id;
-//  int64_t tdoa;
-//};
-
 struct Agent{
     char role_;
     uint8_t  id_;
@@ -87,13 +72,6 @@ struct Agent{
 
     float map_[100][2];  //global map£ºposition
 
-    //int m_rx_cnt=0;
-    //int s_rx_cnt=0;
-    //int tdoa_cnt=0;
-
-    //M_RX m_rx_array[4];
-    //S_RX s_rx_array[4];
-    //TDOA tdoa_array[4];
   
 };
 
