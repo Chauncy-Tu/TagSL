@@ -6,8 +6,8 @@
 #include <stdio.h>
 
 /* Default antenna delay values for 64 MHz PRF. See NOTE 2 below. */
-#define TX_ANT_DLY 16320
-#define RX_ANT_DLY 16320
+#define TX_ANT_DLY 16370
+#define RX_ANT_DLY 16370
 
 // TDMA
 #define SLOT_LENGTH_IN_MS 5
@@ -71,6 +71,8 @@ struct Agent{
     uint8_t slave_[4];
 
     float map_[100][2];  //global map£ºposition
+
+    bool p_new;         //position new
 
   
 };

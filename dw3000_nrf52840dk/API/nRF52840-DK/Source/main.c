@@ -56,6 +56,7 @@ static dwt_config_t config = {
 extern dwt_txconfig_t txconfig_options;
 
 extern int64_t tdoa_cal;
+extern uint8_t slot_cnt_ ;
 bool print_flag=0;
 
 extern void rx_ok_cb(const dwt_cb_data_t *cb_data);
@@ -63,6 +64,8 @@ extern void rx_to_cb(const dwt_cb_data_t *cb_data);
 extern void rx_err_cb(const dwt_cb_data_t *cb_data);
 extern void tx_ok_cb(const dwt_cb_data_t *cb_data);
 
+extern int64_t tdoa_cal;
+extern int tdoa_sum_cnt;
 
 uint8_t slot_event_ = 0;
 
@@ -82,7 +85,7 @@ uint8_t AgentID=6;
 //uint8_t AgentID=10;
 
 
-float   AgentPos[2]={0,0};
+float   AgentPos[2]={0.8,0.8};
 
 uint8_t AgentSlotNum=2;
 uint8_t AgentSlave[4]={2,3,4,5};
@@ -142,23 +145,24 @@ int main(void) {
        {
          agent_run_slot();
          slot_event_=0;
-         //print_flag=1;		
        }
 
        //***************  uart output
-       // while(app_usbd_event_queue_process())
-       //{
-       //}
-       //if(print_flag)
-       //{
+       while(app_usbd_event_queue_process())
+       {
+       }
+       if(agent.p_new==1)
+       {
+       
          
-       //  //uint8_t a[3]="abc";
-       //  //sprintf(a,"\n tdoa:%d ",(int)tdoa_cal);
-       //   //printf("\r\nlen:%d",strlen(a));
-       //  usb_send(a,4);
-       //  print_flag=0;    
-       //}
-       // __WFE();
+         uint8_t a[512];
+
+         //sprintf(a,"\nagent_p %f %f",agent.p_[0],agent.p_[1]);
+         sprintf(a,"\nposition %f %f",agent.p_[0],agent.p_[1]);
+         usb_send(a,strlen(a));
+         
+         agent.p_new=0;
+       }
        //***************  uart output
       
 

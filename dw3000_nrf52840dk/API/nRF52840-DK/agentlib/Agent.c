@@ -48,11 +48,12 @@ static struct M_RX m_rx_array[4];
 static struct S_RX s_rx_array[4];
 static struct TDOA tdoa_array[4];
 
-static int tdoa_sum_cnt=0;
+int tdoa_sum_cnt=0;
+int64_t tdoa_cal=0;
 
 int32_t t_reply_array[4];
 
-int64_t tdoa_cal=0;
+
 
 static int slot_cnt_record[6]={0,0,0,0,0,0};
 int slot_cnt_record_cnt=0;
@@ -154,29 +155,39 @@ static int send_uwb_response(uint8_t mt_id, int seq)
     agent.tx_msg_.frame_type_ = 0x02;       // blink msg
     agent.tx_msg_.frame_cnt_ = frame_cnt_;
     agent.tx_msg_.slot_cnt_ = slot_cnt_;
-    
+      
     agent.tx_msg_.tx_id_ = agent.id_;
     agent.tx_msg_.mt_id_ = mt_id;
 
     Farray_copy(agent.tx_msg_.pos_,agent.pTrue_,sizeof(agent.pTrue_)/sizeof(agent.pTrue_[0]));
     
+    //int64_t temp1=(agent.rx_time_ + ((RESPONSE_DELAY+seq*SEQUENCE_DELAY) * UUS_TO_DWT_TIME));
     uint32_t delaytxtime = ((agent.rx_time_ + ((RESPONSE_DELAY+seq*SEQUENCE_DELAY) * UUS_TO_DWT_TIME)) >> 8) & 0xFFFFFF00;
+   
     dwt_setdelayedtrxtime(delaytxtime);
-    agent.tx_time_ = (uint64_t)delaytxtime << 8;
-    agent.tx_msg_.t_reply_ = (agent.rx_time_)? agent.tx_time_ - agent.rx_time_ +TX_ANT_DLY : 0;
+    agent.tx_time_ = ((uint64_t)(delaytxtime& 0xFFFFFFFEUL) << 8)+TX_ANT_DLY ;
+
+    agent.tx_msg_.t_reply_ = (agent.rx_time_)? agent.tx_time_ - agent.rx_time_ : 0;
     // note:agent.tx_time_ specifies the time to specifies the time at which to send/start receiving, when the system time reaches this time (minus
     // the times it needs to send preamble etc.) then the sending of the frame begins.  The actual time at
     // which the frame¡¯s RMARKER transits the antenna (the standard TX timestamp event) is given by the
     // starttime + the transmit antenna delay.
 
 
-    
+    //int32_t temp2=agent.tx_time_ - agent.rx_time_;
     dwt_writetxdata(sizeof(agent.tx_msg_) - 2, (uint8_t *)&agent.tx_msg_, 0);
     dwt_writetxfctrl(sizeof(agent.tx_msg_), 0, 1);
 
     if (dwt_starttx(DWT_START_TX_DELAYED | DWT_RESPONSE_EXPECTED) != DWT_SUCCESS) {
-        dwt_rxenable(DWT_START_RX_IMMEDIATE);
+        dwt_rxenable(DWT_START_RX_IMMEDIATE); //TODO
     }
+    
+    //nrf_delay_ms(1);
+    //dwt_readtxtimestamp((uint8_t *)&agent.tx_time_);
+    //int32_t temp3=agent.tx_time_- agent.rx_time_;
+
+    //int temp4=0;
+
     return 0;
 }
 
@@ -193,8 +204,9 @@ struct Agent agent_init(char role,uint8_t id)
   {
     agent.pTrue_[i]=0;
     agent.p_[i]=0;
-    agent.pTrue_[i]=0;  
   }
+
+  agent.p_new=0;
   return agent;
 }
 
@@ -315,11 +327,9 @@ void agent_run_slot(void)
 void rx_ok_cb(const dwt_cb_data_t *cb_data)
 {
 
-  
-  float clockOffsetRatio = ((float)dwt_readclockoffset()) / (uint32_t)(1<<26);
-
   dwt_rxenable(DWT_START_RX_IMMEDIATE);
 
+  float clockOffsetRatio = ((float)dwt_readclockoffset()) / (uint32_t)(1<<26);
   uint16_t frame_len = dwt_read32bitreg(RX_FINFO_ID) & RX_FINFO_RXFLEN_BIT_MASK;
   if(frame_len >= 128) 
   { //not a valid message
@@ -333,6 +343,8 @@ void rx_ok_cb(const dwt_cb_data_t *cb_data)
   uint8_t frame_type = agent.rx_msg_.frame_type_;
   uint8_t tx_id=agent.rx_msg_.tx_id_;
   uint8_t mt_id=agent.rx_msg_.mt_id_;
+
+  //printf("\r\nclockOffsetRatio%d:%lf",tx_id,(double)(clockOffsetRatio));
   uint8_t slave[4];
   UCarray_copy(slave, agent.rx_msg_.slave_,sizeof(agent.rx_msg_.slave_)/sizeof(agent.rx_msg_.slave_[0]));
 
@@ -428,11 +440,18 @@ void rx_ok_cb(const dwt_cb_data_t *cb_data)
           {
             tdoa_array[tdoa_cnt].m_id=mt_id;
             tdoa_array[tdoa_cnt].s_id=tx_id;
-            tdoa_array[tdoa_cnt].tdoa=((s_rxtime-m_rxtime)-(1.0-clockOffsetRatio)*t_reply); 
+
+            tdoa_array[tdoa_cnt].tdoa=((s_rxtime-m_rxtime)-(1.0-clockOffsetRatio)*t_reply);
+            //tdoa_array[tdoa_cnt].tdoa=((s_rxtime-m_rxtime)-t_reply);
+
+            if(tx_id==2)
+            {
+              int temp=1;
+            }
             //TODO   cfo + or -
             //printf("\r\n tdoa:%lld",tdoa_array[tdoa_cnt].tdoa);
             
-            tdoa_cal=tdoa_array[tdoa_cnt].tdoa;
+            //tdoa_cal=tdoa_array[tdoa_cnt].tdoa;
             
             tdoa_cnt++;
             
@@ -595,7 +614,8 @@ void Fang_tdoa(void)
     agent.p_[0]=(float)(Mat_temp3->A[0][0]);
     agent.p_[1]=(float)(Mat_temp3->A[1][0]);
   }
-
+  
+  agent.p_new=1;
   Mfree(Mat_A);
   Mfree(Mat_b);
   Mfree(Mat_AT);
@@ -604,14 +624,15 @@ void Fang_tdoa(void)
   Mfree(Mat_temp2);
   Mfree(Mat_temp3);
 
-  //printf("\r\n %f  %f",agent.p_[0],agent.p_[1]);
+  printf("\r\n %f  %f",agent.p_[0],agent.p_[1]);
   
   for(int i=0;i<4;i++)
   {
     if(tdoa_array[i].s_id==2)
     {
       tdoa_sum_cnt++;
-      printf("\r\ntdoa(%d)=%lld",tdoa_sum_cnt,tdoa_array[i].tdoa);
+      tdoa_cal=tdoa_array[i].tdoa;
+      printf("\r\ntdoa(%d)=%lld",tdoa_sum_cnt,tdoa_cal);
     }
   }
   
@@ -647,15 +668,6 @@ void tdoa_clear()
     tdoa_cnt=0;
   }
 }
-
-
-
-
-
-
-
-
-
 
 
 void Matrix_transpose(float *MatInput,float *MatOutput,int m,int n)
