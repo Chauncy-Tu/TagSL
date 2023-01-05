@@ -78,11 +78,11 @@ struct  Agent agent;
 //char    AgentRole=Slave_Anchor;
 //uint8_t AgentID=2;
 
-char    AgentRole=Tag;
-uint8_t AgentID=6;
+//char    AgentRole=Tag;
+//uint8_t AgentID=7;
 
-//char    AgentRole=Sniffer;
-//uint8_t AgentID=10;
+char    AgentRole=Sniffer;
+uint8_t AgentID=8;
 
 
 float   AgentPos[2]={0.8,0.8};

@@ -191,6 +191,30 @@ static int send_uwb_response(uint8_t mt_id, int seq)
     return 0;
 }
 
+static int send_uwb_pos()
+{
+    dwt_forcetrxoff();  
+    agent.tx_msg_.frame_type_ = 0x03;       // blink msg
+    agent.tx_msg_.frame_cnt_ = frame_cnt_;
+    agent.tx_msg_.slot_cnt_ = slot_cnt_;
+    agent.tx_msg_.t_reply_ = 0;
+    agent.tx_msg_.tx_id_ = agent.id_;
+
+
+    Farray_copy(agent.tx_msg_.pos_,agent.p_,sizeof(agent.p_)/sizeof(agent.p_[0]));
+    
+    dwt_writetxdata(sizeof(agent.tx_msg_) - 2, (uint8_t *)&agent.tx_msg_, 0);
+    dwt_writetxfctrl(sizeof(agent.tx_msg_), 0, 1);
+    dwt_starttx(DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED);
+    //if (dwt_starttx(DWT_START_TX_IMMEDIATE != DWT_SUCCESS)) {
+    //}
+    
+    return 0;
+}
+
+
+
+
 
 
 struct Agent agent_init(char role,uint8_t id)
@@ -255,8 +279,12 @@ void agent_run_slot(void)
     }
     else if(agent.role_==Tag)
     {
-      if(slot_cnt_==100)
+      if(slot_cnt_==10*agent.id_)
       {
+
+        send_uwb_pos();
+
+
         //printf("\r\nframe_cnt:%d",frame_cnt_);
         //printf("\r\nresponse_cnt:%d",response_cnt_);
         response_cnt_=0;
@@ -290,31 +318,32 @@ void agent_run_slot(void)
     }
     else if(agent.role_==Sniffer)
     {
-      if(slot_cnt_==20)
-      {
-        printf("\r\nframe_cnt:%d",frame_cnt_);
-        for(int i=0;i<6;i++)
-        {
-          printf("\r\nrx_time(%d)=%lld;",i+1,(sniffer_rx_time[i]));
+      //if(slot_cnt_==20)
+      //{
+      //  printf("\r\nframe_cnt:%d",frame_cnt_);
+      //  for(int i=0;i<6;i++)
+      //  {
+      //    printf("\r\nrx_time(%d)=%lld;",i+1,(sniffer_rx_time[i]));
           
-        }
-        for(int i=0;i<6;i++)
-        {
-          sniffer_rx_time[i]=0;
-        }
-        for(int i=0;i<6;i++)
-        {
-          printf("\r\nslot_cnt_record(%d)=%d;",i,slot_cnt_record[i]);
+      //  }
+      //  for(int i=0;i<6;i++)
+      //  {
+      //    sniffer_rx_time[i]=0;
+      //  }
+      //  for(int i=0;i<6;i++)
+      //  {
+      //    printf("\r\nslot_cnt_record(%d)=%d;",i,slot_cnt_record[i]);
           
-        }
-        for(int i=0;i<6;i++)
-        {
-          slot_cnt_record[i]=0;
-        }
-        slot_cnt_record_cnt=0;
+      //  }
+      //  for(int i=0;i<6;i++)
+      //  {
+      //    slot_cnt_record[i]=0;
+      //  }
+      //  slot_cnt_record_cnt=0;
         
-        sniffer_rx_cnt=0;
-      }
+      //  sniffer_rx_cnt=0;
+      //}
+
     }
 
 
@@ -479,24 +508,32 @@ void rx_ok_cb(const dwt_cb_data_t *cb_data)
     }
     else if (agent.role_==Sniffer)
     {
-      if(frame_type==0x00)  // sync frame
+      //if(frame_type==0x00)  // sync frame
+      //{
+      //  NRFX_IRQ_PENDING_CLEAR(SysTick_IRQn);
+      //  SystemCoreClockUpdate();
+      //  SysTick_Config(SystemCoreClock / 1000 * SLOT_LENGTH_IN_MS);   
+      //  slot_cnt_=0;
+      //  frame_cnt_=agent.rx_msg_.frame_cnt_; 
+      //}
+      //if(sniffer_rx_cnt>=0&&sniffer_rx_cnt<6)
+      //{
+      //sniffer_rx_time[sniffer_rx_cnt]=agent.rx_time_;
+      //sniffer_rx_cnt++;
+      //}
+      //if(slot_cnt_record_cnt>=0&&slot_cnt_record_cnt<6)
+      //{
+      //  slot_cnt_record[slot_cnt_record_cnt]=agent.rx_msg_.slot_cnt_;
+      //  slot_cnt_record_cnt++;
+      //}
+
+
+      if(frame_type==0x03)
       {
-        NRFX_IRQ_PENDING_CLEAR(SysTick_IRQn);
-        SystemCoreClockUpdate();
-        SysTick_Config(SystemCoreClock / 1000 * SLOT_LENGTH_IN_MS);   
-        slot_cnt_=0;
-        frame_cnt_=agent.rx_msg_.frame_cnt_; 
+        Farray_copy(agent.map_[tx_id],agent.rx_msg_.pos_,sizeof(agent.rx_msg_.pos_)/sizeof(agent.rx_msg_.pos_[0]));
+        printf("\r\n%d:%f %f",tx_id,agent.rx_msg_.pos_[0],agent.rx_msg_.pos_[1]);
       }
-      if(sniffer_rx_cnt>=0&&sniffer_rx_cnt<6)
-      {
-      sniffer_rx_time[sniffer_rx_cnt]=agent.rx_time_;
-      sniffer_rx_cnt++;
-      }
-      if(slot_cnt_record_cnt>=0&&slot_cnt_record_cnt<6)
-      {
-        slot_cnt_record[slot_cnt_record_cnt]=agent.rx_msg_.slot_cnt_;
-        slot_cnt_record_cnt++;
-      }
+
     }
     
     

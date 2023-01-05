@@ -142,5 +142,5 @@
   <SessionOpenFile windowGroup="DockEditLeft" x="57" y="54" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="../../../double buffer/dw1000.h" selected="0" top="43" codecName="Default"/>
   <SessionOpenFile windowGroup="DockEditLeft" x="0" y="72" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="SDK/components/libraries/delay/nrf_delay.h" selected="0" top="69" codecName="Default"/>
  </Files>
- <ARMCrossStudioWindow activeProject="TagSL" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="D:/Lab/Project/TagSL/dw3000_nrf52840dk/API/nRF52840-DK/userlib" debugSearchPath="" autoConnectCapabilities="3711"/>
+ <ARMCrossStudioWindow activeProject="TagSL" fileDialogDefaultFilter="*.c" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="D:/Lab/Project/TagSL/dw3000_nrf52840dk/API/nRF52840-DK/userlib" debugSearchPath="" autoConnectCapabilities="3199"/>
 </session>

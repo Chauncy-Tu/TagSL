@@ -1,0 +1,20 @@
+
+
+close all;clear all;clc;
+
+load position1.mat;
+
+ancpos0=[0,0];
+ancpos1=[1,1;-1,1;-1,-1;1,-1]*0.8;
+figure;
+plot(ancpos0(1),ancpos0(2),'ro');
+hold on;
+plot(ancpos1(:,1),ancpos1(:,2),'bo');
+grid on;
+xlim=[-2,2];
+ylim=[-2,2];
+
+_t=[-0.8,0;-0.4,0.4];
+
+figure;
+plot()
